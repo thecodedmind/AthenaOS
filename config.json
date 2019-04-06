@@ -1,0 +1,30 @@
+{
+    "disabled": [
+        "CountTest"
+    ],
+    "events": {
+        "op": {
+            "data": "This\\nis\\nan\\ntest",
+            "type": "output"
+        },
+        "testev": {
+            "data": "print(\"This is an eval test\")",
+            "type": "eval"
+        },
+        "testmes": {
+            "data": "This is a message test.",
+            "type": "message"
+        },
+        "testy": {
+            "data": "hm",
+            "type": "message"
+        }
+    },
+    "skip_prompts": false,
+    "tasks": {
+        "testloop": false,
+        "testlooptwo": false
+    },
+    "tts": false,
+    "username": "Kyle"
+}
