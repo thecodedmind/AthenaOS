@@ -122,7 +122,7 @@ class Help(BaseCommand):
 	"""
 	This is a help.
 	Format: help <command>
-	Searches by the command class name and its alias variable.
+	Searches by the command triggers
 	[BASE]
 	~Kaiser
 	"""
@@ -153,7 +153,7 @@ class Help(BaseCommand):
 			return {'message': "Cancelling help menu."}
 		
 		for item in self.host.commands:
-			inst = item[1](self.host)
+			inst = self.host.command_cache[item[0]]#item[1](self.host)
 			if inst.check(value):#if value.lower() == item[0].lower() or value.lower() == inst.alias:
 				return {'output': inst.getHelp()}
 			
