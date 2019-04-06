@@ -497,7 +497,7 @@ class Updating(BaseCommand):
 	def ucheck(self):
 		s = ""
 		updates = False
-		with open('manifest.json') as f:
+		with open(self.host.scriptdir+'manifest.json') as f:
 			local_manifest = json.loads(f.read())
 							
 			req = requests.get(self.host.master_manifest).text
@@ -516,7 +516,7 @@ class Updating(BaseCommand):
 				else:
 					s += f"{item} missing from local manifest."
 					
-		return {'updates': updates, 'output': s}
+		return {'updates': updates, 'output': s[:-1]}
 	
 	def onTrigger(self, value = ""):
 		if not value:
@@ -531,7 +531,7 @@ class Updating(BaseCommand):
 			req = requests.get(self.host.master_manifest).text
 			remote_manifest = json.loads(req)
 			
-			with open('manifest.json') as f:
+			with open(self.host.scriptdir+'manifest.json') as f:
 				local_manifest = json.loads(f.read())
 
 				for item in remote_manifest['files']:
@@ -550,11 +550,13 @@ class Updating(BaseCommand):
 							
 						else:
 							self.host.getFile(remote_manifest['files'][item]['url'], options = '-N -q')
-							
+						
 						local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
-						with open('manifest.json', 'w') as fp:
-							json.dump(local_manifest, fp, indent=4)
-						return self.message("Finished updating.")
+						
+					with open(self.host.scriptdir+'manifest.json', 'w') as fp:
+						json.dump(local_manifest, fp, indent=4)
+						
+					return self.message("Finished updating.")
 					
 			return self.message(f"Failed to update; {value} invalid target.")
 		
@@ -562,7 +564,7 @@ class Updating(BaseCommand):
 			req = requests.get(self.host.master_manifest).text
 			remote_manifest = json.loads(req)
 			
-			with open('manifest.json') as f:
+			with open(self.host.scriptdir+'manifest.json') as f:
 				local_manifest = json.loads(f.read())
 
 				for item in remote_manifest['files']:
@@ -602,7 +604,7 @@ class Updating(BaseCommand):
 						else:
 							local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
 							
-				with open('manifest.json', 'w') as fp:
-					json.dump(local_manifest, fp, indent=4)
-					
-				return self.message("Finished updating.")
+			with open(self.host.scriptdir+'manifest.json', 'w') as fp:
+				json.dump(local_manifest, fp, indent=4)
+				
+			return self.message("Finished updating.")
