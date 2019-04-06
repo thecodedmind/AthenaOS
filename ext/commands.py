@@ -504,13 +504,18 @@ class Updating(BaseCommand):
 			remote_manifest = json.loads(req)
 			
 			for item in remote_manifest['files']:
-				if remote_manifest['files'][item]['version'] == local_manifest['files'][item]['version']:
-					s += f"{item} OK\n"
+				rem_mod = remote_manifest['files'].get(item)
+				local_mod = local_manifest['files'].get(item)
+				if rem_mod and local_mod:
+					if rem_mod['version'] == local_mod['version']:
+						s += f"{item} OK\n"
+					else:
+						s += f"{item} outdated. LOCAL: {local_mod['version']} - REMOTE: {rem_mod['version']}\n"
+						s += f"Consider updating with `update check` or manually downloading the file at {rem_mod['url']}\n"
+						updates = True
 				else:
-					s += f"{item} outdated. LOCAL: {local_manifest['files'][item]['version']} - REMOTE: {remote_manifest['files'][item]['version']}\n"
-					s += f"Consider updating with `update check` or manually downloading the file at {remote_manifest['files'][item]['url']}\n"
-					updates = True
-		
+					s += f"{item} missing from local manifest."
+					
 		return {'updates': updates, 'output': s}
 	
 	def onTrigger(self, value = ""):
@@ -561,19 +566,43 @@ class Updating(BaseCommand):
 				local_manifest = json.loads(f.read())
 
 				for item in remote_manifest['files']:
-					print("Ready to update.")
-					if local_manifest['files'][item]['version'] == remote_manifest['files'][item]['version'] and not self.host.config._get('force_global_update'):
-						print("Skipping "+item)
-					
-					else:
-						if "/ext/" in remote_manifest['files'][item]['url']:
-							self.host.getFile(remote_manifest['files'][item]['url'], 'ext/', options = '-N -q')
+					rem_mod = remote_manifest['files'].get(item)
+					local_mod = local_manifest['files'].get(item)
+					if local_mod and rem_mod:
+						if local_mod['version'] == rem_mod['version'] and not self.host.config._get('force_global_update'):
+							print("Skipping "+item)
+						
+						else:
+							if "/ext/" in rem_mod['url']:
+								self.host.getFile(rem_mod['url'], 'ext/', options = '-N -q')
+								
+							elif "/processes/" in rem_mod['url']:
+								self.host.getFile(rem_mod['url'], 'processes/', options = '-N -q')
+								
+							else:
+								self.host.getFile(rem_mod['url'], options = '-N -q')
+							if not local_mod:
+								local_manifest['files'][item] = {'url':rem_mod['url'], 'version': rem_mod['version']}
+							else:
+								local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
 							
-						elif "/processes/" in remote_manifest['files'][item]['url']:
-							self.host.getFile(remote_manifest['files'][item]['url'], 'processes/', options = '-N -q')
+					else:
+						print(f"Desync found in {item}")
+						if "/ext/" in rem_mod['url']:
+							self.host.getFile(rem_mod['url'], 'ext/', options = '-N -q')
+							
+						elif "/processes/" in rem_mod['url']:
+							self.host.getFile(rem_mod['url'], 'processes/', options = '-N -q')
 							
 						else:
-							self.host.getFile(remote_manifest['files'][item]['url'], options = '-N -q')
-						local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
-						return self.message("Finished updating.")
-				
+							self.host.getFile(rem_mod['url'], options = '-N -q')
+						
+						if not local_mod:
+							local_manifest['files'][item] = {'url':rem_mod['url'], 'version': rem_mod['version']}
+						else:
+							local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
+							
+				with open('manifest.json', 'w') as fp:
+					json.dump(local_manifest, fp, indent=4)
+					
+				return self.message("Finished updating.")

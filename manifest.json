@@ -10,11 +10,7 @@
         },
         "kext.py": {
             "version": "19.4.6",
-            "url": "https://github.com/codedthoughts/AthenaOS/raw/master/et/kext.py"
-        },
-        "test.py": {
-            "version": "19.4.6",
-            "url": "https://github.com/codedthoughts/AthenaOS/raw/master/test.py"
+            "url": "https://github.com/codedthoughts/AthenaOS/raw/master/ext/kext.py"
         }
     }
 }
