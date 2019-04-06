@@ -477,3 +477,21 @@ class Eval(BaseCommand):
 		except Exception as e:
 			return {'message': f"Value failed to evaluate for the following reason: {e}"}
 		
+class Updating(BaseCommand):
+	"""
+	Handles manual and automatic updating.
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [self.message("update")]
+		self.inter = True
+		
+	def onTrigger(self, value = ""):
+		if not value:
+			return self.message("Needs an operation, example: update check, update get")
+		
+		if value == "check":
+			req = requests.get(self.host.master_manifest).text
+			data = json.loads(req)

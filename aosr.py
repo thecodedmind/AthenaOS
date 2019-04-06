@@ -24,7 +24,9 @@ class CommandInfo:
 		self.say = say
 		self.threads = {}
 		self.task_cache = {}
-	
+		self.master_host = "https://github.com/codedthoughts/AthenaOS/raw/master/"
+		self.master_manifest = self.master_host+"/manifest.json"
+		
 	def promptConfirm(self, message):
 		if self.config._get('skip_prompts'):
 			return True
