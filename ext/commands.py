@@ -6,6 +6,9 @@ import os
 import humanfriendly
 import humanfriendly.prompts
 from Color import *
+import json
+import requests
+
 class BaseCommand:
 	"""
 	Template for creating new commands
@@ -164,33 +167,33 @@ class Task(BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'task'}]
+		self.phrases = [{'message': 'task'}, {'message': 'process'}]
 		self.inter = True
 		
 	def onTrigger(self, value = ""):
 		if value.startswith("start "):
 			task = value.split(" ")[1]
-			res = self.host.startTask(task)
+			res = self.host.startProcess(task)
 			
 			if res:
-				return {'message': f"Started task {task}"}
+				return {'message': f"Started process {task}"}
 			else:
 				return {'message': f"Problem starting {task}, already running or does not exist."}
 			
 		elif value.startswith("stop "):
 			task = value.split(" ")[1]
-			res = self.host.stopTask(task)
+			res = self.host.stopProcess(task)
 			
 			if res:
-				return {'message': f"Stopped task {task}"}
+				return {'message': f"Stopped process {task}"}
 			else:
-				return {'message': f"Problem stopping task {task}, is not running or does not exist."}
+				return {'message': f"Problem stopping process {task}, is not running or does not exist."}
 		
 		elif value == "list":
-			return {'output':humanfriendly.text.concatenate(self.host.task_cache.keys())}
+			return {'output':humanfriendly.text.concatenate(self.host.process_cache.keys())}
 		
 		else:
-			return {'message': f"Invalid task command."}
+			return {'message': f"Invalid process command."}
 		
 class CfgGet(BaseCommand):
 	"""
@@ -488,10 +491,89 @@ class Updating(BaseCommand):
 		self.phrases = [self.message("update")]
 		self.inter = True
 		
+		if self.host.config._get('update_check_on_startup'):
+			self.host.config._set('has_updates', self.ucheck()['updates'])
+			
+	def ucheck(self):
+		s = ""
+		updates = False
+		with open('manifest.json') as f:
+			local_manifest = json.loads(f.read())
+							
+			req = requests.get(self.host.master_manifest).text
+			remote_manifest = json.loads(req)
+			
+			for item in remote_manifest['files']:
+				if remote_manifest['files'][item]['version'] == local_manifest['files'][item]['version']:
+					s += f"{item} OK\n"
+				else:
+					s += f"{item} outdated. LOCAL: {local_manifest['files'][item]['version']} - REMOTE: {remote_manifest['files'][item]['version']}\n"
+					s += f"Consider updating with `update check` or manually downloading the file at {remote_manifest['files'][item]['url']}\n"
+					updates = True
+		
+		return {'updates': updates, 'output': s}
+	
 	def onTrigger(self, value = ""):
 		if not value:
 			return self.message("Needs an operation, example: update check, update get")
 		
 		if value == "check":
+			return self.output(self.ucheck()['output'])
+					
+		elif value.startswith("get "):
+			value = value[4:]
+			print("Getting "+value)
 			req = requests.get(self.host.master_manifest).text
-			data = json.loads(req)
+			remote_manifest = json.loads(req)
+			
+			with open('manifest.json') as f:
+				local_manifest = json.loads(f.read())
+
+				for item in remote_manifest['files']:
+					print(item)
+					print(value)
+					if value == item:
+						print("Ready to update.")
+						if local_manifest['files'][item]['version'] == remote_manifest['files'][item]['version']:
+							return self.message("File is already up to date.")
+						
+						if "/ext/" in remote_manifest['files'][item]['url']:
+							self.host.getFile(remote_manifest['files'][item]['url'], 'ext/', options = '-N -q')
+							
+						elif "/processes/" in remote_manifest['files'][item]['url']:
+							self.host.getFile(remote_manifest['files'][item]['url'], 'processes/', options = '-N -q')
+							
+						else:
+							self.host.getFile(remote_manifest['files'][item]['url'], options = '-N -q')
+							
+						local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
+						with open('manifest.json', 'w') as fp:
+							json.dump(local_manifest, fp, indent=4)
+						return self.message("Finished updating.")
+					
+			return self.message(f"Failed to update; {value} invalid target.")
+		
+		elif value.startswith("get"):
+			req = requests.get(self.host.master_manifest).text
+			remote_manifest = json.loads(req)
+			
+			with open('manifest.json') as f:
+				local_manifest = json.loads(f.read())
+
+				for item in remote_manifest['files']:
+					print("Ready to update.")
+					if local_manifest['files'][item]['version'] == remote_manifest['files'][item]['version'] and not self.host.config._get('force_global_update'):
+						print("Skipping "+item)
+					
+					else:
+						if "/ext/" in remote_manifest['files'][item]['url']:
+							self.host.getFile(remote_manifest['files'][item]['url'], 'ext/', options = '-N -q')
+							
+						elif "/processes/" in remote_manifest['files'][item]['url']:
+							self.host.getFile(remote_manifest['files'][item]['url'], 'processes/', options = '-N -q')
+							
+						else:
+							self.host.getFile(remote_manifest['files'][item]['url'], options = '-N -q')
+						local_manifest['files'][item]['version'] = remote_manifest['files'][item]['version']
+						return self.message("Finished updating.")
+				

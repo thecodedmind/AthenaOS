@@ -22,10 +22,17 @@ class CommandInfo:
 		self.commands = []
 		self.command_cache = {}
 		self.say = say
+		self.printf = printf
+		self.updateProcesses = initCacheProcesses
+		self.updateCommands = initCacheCommands
 		self.threads = {}
-		self.task_cache = {}
+		self.process_cache = {}
 		self.master_host = "https://github.com/codedthoughts/AthenaOS/raw/master/"
 		self.master_manifest = self.master_host+"/manifest.json"
+
+	def getFile(self, url, save_to = "", *, options = ""):
+		out_dir = self.scriptdir+save_to
+		os.system(f'wget {url} -P {out_dir} {options}&')	
 		
 	def promptConfirm(self, message):
 		if self.config._get('skip_prompts'):
@@ -46,8 +53,8 @@ class CommandInfo:
 		except KeyError:
 			return {'message': "Invalid event data."}
 		
-	def runTask(self, task, name):
-		printf("Running task thread...", tag='info')
+	def runProcess(self, task, name):
+		printf("Running process thread...", tag='info')
 		printf(task, tag='info')
 		thread = multiprocessing.Process(target=task, args=([self]))
 		self.threads[name] = thread
@@ -55,15 +62,15 @@ class CommandInfo:
 		thread.daemon = True
 		thread.start()
 	
-	def startTask(self, task):
-		printf("Starting task thread...", tag='info')
+	def startProcess(self, task):
+		printf("Starting process thread...", tag='info')
 		printf(task)
-		printf(self.config.data['tasks'][task])
-		if self.config.data['tasks'][task]:
+		printf(self.config.data['processes'][task])
+		if self.config.data['processes'][task]:
 			return False
 		
-		taskobject = self.task_cache[task]
-		self.config.data['tasks'][task] = True
+		taskobject = self.process_cache[task]
+		self.config.data['processes'][task] = True
 		self.config.save()
 		thread = multiprocessing.Process(target=taskobject, args=([self]))
 		self.threads[task] = thread
@@ -71,13 +78,14 @@ class CommandInfo:
 		thread.start()
 		return True
 	
-	def stopTask(self, task):
-		printf("Stopping task thread...", tag='info')
+	def stopProcess(self, task):
+		print(self.threads)
+		printf("Stopping process thread...", tag='info')
 		printf(task)
 		try:
 			self.threads[task].terminate()
 			del self.threads[task]
-			self.config.data['tasks'][task] = False
+			self.config.data['processes'][task] = False
 			self.config.save()
 			return True
 		except KeyError:
@@ -178,80 +186,82 @@ def run_cli():
 		phrase = input("(> ")
 		#printf(f"Captured: {phrase}", tag="info")
 		resp = process_commands(phrase)
-	
-def run():
-	global gcinfo
-	with AutomaticSpinner(label="Loading Athena..."):
-		printf("Creating core...", tag='info')
-		gcinfo = CommandInfo()
-		gcinfo.config = memory.Memory(path=gcinfo.scriptdir, logging=True)
-		commandsf = []
-		printf("Getting Command modules...", tag='info')
-		
-		for file in os.listdir(gcinfo.scriptdir+"ext/"):
-			filename = os.fsdecode(file)
-			if filename.endswith(".py"):
-				modname = filename.split(".")[0]
-				printf(f"Loading command module: {modname}", tag='info')
-				importlib.import_module("ext."+modname)
-				clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
-				#print(clsmembers)
-				commandsf += clsmembers
-		
-		
-		invalid_classes = []
-		for item in commandsf:
-			if issubclass(item[1], BaseCommand):
-				printf(f"Validated {item}", tag='info')
-				gcinfo.command_cache[item[0]] = item[1](gcinfo)
-			else:
-				invalid_classes.append(item)
-		
-		for item in invalid_classes:
-			printf(f"Invalidating {item}")
-			commandsf.remove(item)
 
-		print("Finalized commands.")
-		print(commandsf)
+def initCreateCore():
+	printf("Creating core...", tag='info')
+	gcinfo = CommandInfo()
+	gcinfo.config = memory.Memory(path=gcinfo.scriptdir, logging=True)
+	return gcinfo
+
+def initCacheProcesses(gcinfo):
+	printf("Loading background processes...", tag='info')
+	tasks = gcinfo.config._get('processes', {})
+	changes = False
+	for file in os.listdir(gcinfo.scriptdir+"processes/"):
+		filename = os.fsdecode(file)
+		if filename.endswith(".py"):
+			modname = filename.split(".")[0]
+			printf(f"Loading task module: {modname}", tag='info')
+			importlib.import_module("processes."+modname)
+			clsmembers = inspect.getmembers(sys.modules["processes."+modname], inspect.isfunction)
+			for item in clsmembers:
+				#print(inspect.getfullargspec(item[1]))
+				try:
+					if inspect.getfullargspec(item[1]).args[0] == 'event':
+						printf(f"{item} found", tag='info')
+						gcinfo.process_cache[item[0]] = item[1]
+						if item[0] not in tasks.keys():
+							printf(f"Adding {item[0]} to processes.", tag='info')
+							tasks[item[0]] = False
+							changes = True
+						else:
+							#printf(f"Running {tasks[item[0]]}", tag='info')
+							if tasks[item[0]]:
+								gcinfo.runProcess(item[1], item[0])
+				except Exception as e:
+					pass#print(e)
+	if changes:
+		printf("Updating processes config, new process have been added...", tag='info')
+		gcinfo.config._set('processes', tasks)	
 		
-		printf("Checking command disabling...", tag='info')
+def initCacheCommands(gcinfo):
+	commandsf = []
+	printf("Getting Command modules...", tag='info')
+	for file in os.listdir(gcinfo.scriptdir+"ext/"):
+		filename = os.fsdecode(file)
+		if filename.endswith(".py"):
+			modname = filename.split(".")[0]
+			printf(f"Loading command module: {modname}", tag='info')
+			importlib.import_module("ext."+modname)
+			clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
+			#print(clsmembers)
+			commandsf += clsmembers
+	
+	
+	invalid_classes = []
+	for item in commandsf:
+		if issubclass(item[1], BaseCommand):
+			printf(f"Validated {item}", tag='info')
+			gcinfo.command_cache[item[0]] = item[1](gcinfo)
+		else:
+			invalid_classes.append(item)
+	
+	for item in invalid_classes:
+		printf(f"Invalidating {item}")
+		commandsf.remove(item)	
 		dis = gcinfo.config._get('disabled')
 		if not dis:
 			gcinfo.config._set('disabled', [])
 			dis = []
 			
-		gcinfo.commands = commandsf	
+	gcinfo.commands = commandsf	
 		
-		printf("Loading background tasks...", tag='info')
-		tasks = gcinfo.config._get('tasks', {})
-		changes = False
-		for file in os.listdir(gcinfo.scriptdir+"tasks/"):
-			filename = os.fsdecode(file)
-			if filename.endswith(".py"):
-				modname = filename.split(".")[0]
-				printf(f"Loading task module: {modname}", tag='info')
-				importlib.import_module("tasks."+modname)
-				clsmembers = inspect.getmembers(sys.modules["tasks."+modname], inspect.isfunction)
-				for item in clsmembers:
-					#print(inspect.getfullargspec(item[1]))
-					try:
-						if inspect.getfullargspec(item[1]).args[0] == 'event':
-							printf(item[0]+" found", tag='info')
-							gcinfo.task_cache[item[0]] = item[1]
-							if item[0] not in tasks.keys():
-								printf(f"Adding {item[0]} to tasks.", tag='info')
-								tasks[item[0]] = False
-								changes = True
-							else:
-								printf(f"Running {tasks[item[0]]}", tag='info')
-								if tasks[item[0]]:
-									gcinfo.runTask(item[1], item[0])
-					except:
-						pass
-		if changes:
-			printf("Updating tasks config, new tasks have been added...", tag='info')
-			gcinfo.config._set('tasks', tasks)
-		
+def run():
+	global gcinfo
+	with AutomaticSpinner(label="Loading Athena..."):
+		gcinfo = initCreateCore()
+		initCacheProcesses(gcinfo)
+		initCacheCommands(gcinfo)
 	run_cli()
 		
 run()

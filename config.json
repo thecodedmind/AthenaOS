@@ -20,11 +20,15 @@
             "type": "message"
         }
     },
-    "skip_prompts": false,
-    "tasks": {
+    "force_global_update": false,
+    "has_updates": true,
+    "processes": {
+        "notify_update": false,
         "testloop": false,
         "testlooptwo": false
     },
+    "skip_prompts": false,
     "tts": false,
+    "update_check_on_startup": false,
     "username": "Kyle"
 }
