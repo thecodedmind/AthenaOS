@@ -4,6 +4,7 @@ from . import commands
 import textblob
 from textblob import TextBlob, Word
 import humanfriendly
+import random
 
 class CountTest(commands.BaseCommand):
 	def __init__(self, host):
@@ -16,6 +17,100 @@ class CountTest(commands.BaseCommand):
 	def onTrigger(self):
 		self.count += 1
 		return self.message(f"Count is now {self.count}")
+
+class EightBall(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [self.message("8ball")]
+		self.inter = True
+	
+	def onTrigger(self, value):
+		responses = ["as I see it, yes",
+		"ask again later",
+		"better not tell you now",
+		"cannot predict now",
+		"concentrate and ask again",
+		"don’t count on it",
+		"it is certain",
+		"it is decidedly so",
+		"most likely",
+		"my reply is no",
+		"my sources say no",
+		"outlook good",
+		"outlook not so good",
+		"reply hazy try again",
+		"signs point to yes",
+		"very doubtful",
+		"without a doubt",
+		"yes",
+		"yes, definitely",
+		"you may rely on it"]
+		res = random.choice(responses)
+		return self.message(res.capitalize()+".")
+
+class Dice(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [self.message("roll"), self.message("dice")]
+		self.inter = True
+		
+	def onTrigger(self, value):
+		notation = value
+		try:
+			dm = 0
+			if "+" in notation:
+				dm = int(notation.split("+")[1]) #modifier; 2d12+2 adds 2 to total
+				notation = notation.split("+")[0]
+			dn = int(notation.split("d")[0]) #number of die; eg 2d12 is 2
+			ds = int(notation.split("d")[1]) #sides of the die; eg 2d12 is 12
+			if dn <= 0 or ds <= 1:
+				return self.message("Dice count should be above 1 and sides should be above 0.")
+			
+			dies = []
+			while dn > 0:
+				dies.append(random.randint(1, ds))
+				dn -= 1
+
+			dies_sl = []
+			dies_total = 0
+			for item in dies:
+				dies_total += int(item)
+				dies_sl.append(str(item))
+			
+			if dm > 0:
+				dies_total += dm
+				dies_total = f"{dies_total} (+{dm})"
+				
+			dies_string = humanfriendly.text.concatenate(dies_sl)
+
+			return self.message(f"You rolled: {dies_string}. (Total: {dies_total})")
+		except IndexError:
+			return self.message("Error in notation; example is `2d6`.")
+		except ValueError:
+			return self.message("One of the values is not a real number.")
+		except Exception as e:
+			return self.message(f"Some problem; {e}")
+			
+class Flip(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'flip a coin', 'check': 90}]
+	
+	def onTrigger(self):
+		if random.random() > 0.5:
+			return self.message(f"It landed Heads!")
+		else:
+			return self.message(f"It landed Tails!")
+	
+class Choice(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [self.message("choice"), self.message("choose")]
+		self.inter = True
+	
+	def onTrigger(self, value):
+		choices = value.split()
+		return self.message(f"Between {humanfriendly.text.concatenate(choices)}, I choose {random.choice(choices)}.")
 	
 class Repeat(commands.BaseCommand):
 	"""

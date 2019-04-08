@@ -23,9 +23,8 @@
     "force_global_update": false,
     "has_updates": true,
     "processes": {
-        "notify_update": false,
-        "testloop": false,
-        "testlooptwo": false
+        "AOSProcess": false,
+        "TestProc": false
     },
     "skip_prompts": false,
     "tts": false,

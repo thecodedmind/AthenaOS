@@ -11,8 +11,10 @@ from Color import *
 import multiprocessing
 from time import sleep
 from ext.commands import BaseCommand
+from processes.processes import AOSProcess
 import humanfriendly
 from humanfriendly import AutomaticSpinner
+import readline
 
 class CommandInfo:
 	def __init__(self):
@@ -25,11 +27,15 @@ class CommandInfo:
 		self.printf = printf
 		self.updateProcesses = initCacheProcesses
 		self.updateCommands = initCacheCommands
+		self.processCommands = process_commands
 		self.threads = {}
-		self.process_cache = {}
 		self.master_host = "https://github.com/codedthoughts/AthenaOS/raw/master/"
 		self.master_manifest = self.master_host+"/manifest.json"
-
+	
+	def insert(self, text):
+		readline.insert_text(text)
+		readline.redisplay()
+		
 	def getFile(self, url, save_to = "", *, options = ""):
 		out_dir = self.scriptdir+save_to
 		os.system(f'wget {url} -P {out_dir} {options}&')	
@@ -53,43 +59,23 @@ class CommandInfo:
 		except KeyError:
 			return {'message': "Invalid event data."}
 		
-	def runProcess(self, task, name):
-		printf("Running process thread...", tag='info')
-		printf(task, tag='info')
-		thread = multiprocessing.Process(target=task, args=([self]))
-		self.threads[name] = thread
-		print(self.threads)
-		thread.daemon = True
-		thread.start()
-	
 	def startProcess(self, task):
 		printf("Starting process thread...", tag='info')
-		printf(task)
 		printf(self.config.data['processes'][task])
 		if self.config.data['processes'][task]:
 			return False
 		
-		taskobject = self.process_cache[task]
-		self.config.data['processes'][task] = True
-		self.config.save()
-		thread = multiprocessing.Process(target=taskobject, args=([self]))
-		self.threads[task] = thread
-		thread.daemon = True
-		thread.start()
+		self.threads[task]['object'].start()
 		return True
 	
 	def stopProcess(self, task):
 		print(self.threads)
 		printf("Stopping process thread...", tag='info')
-		printf(task)
-		try:
-			self.threads[task].terminate()
-			del self.threads[task]
-			self.config.data['processes'][task] = False
-			self.config.save()
-			return True
-		except KeyError:
+		if not self.config.data['processes'][task]:
 			return False
+		
+		self.threads[task]['object'].stop()
+		return True
 			
 def printf(text, *, tag="", ts=True):
 	if ts:
@@ -148,8 +134,10 @@ def process_commands(phrase):
 					#print(f"Got value {value}")
 					return_data = inst.onTrigger(value)
 				else:
-					return_data = inst.onTrigger()
-					
+					try:
+						return_data = inst.onTrigger()
+					except TypeError:
+						return_data = inst.onTrigger("")
 				#print(return_data)
 				if return_data:
 					handleReturnData(return_data)
@@ -170,7 +158,7 @@ def handleReturnData(return_data):
 			
 	if return_data.get('code') == "quit":
 		quit()
-		
+	
 def run_cli():
 	printf("Loading Athena", tag="info")
 	#user = touchConfig('core', 'username', os.environ.get('USER'))
@@ -180,12 +168,12 @@ def run_cli():
 		user = os.environ.get('USER')
 		
 	say(f"What do you need, {user}?")
-	listening = True
 
 	while True:
 		phrase = input("(> ")
-		#printf(f"Captured: {phrase}", tag="info")
 		resp = process_commands(phrase)
+		#printf(f"Captured: {phrase}", tag="info")
+		
 
 def initCreateCore():
 	printf("Creating core...", tag='info')
@@ -195,37 +183,32 @@ def initCreateCore():
 
 def initCacheProcesses(gcinfo):
 	printf("Loading background processes...", tag='info')
-	tasks = gcinfo.config._get('processes', {})
-	changes = False
+	tasks = gcinfo.config._get('processes')
+	if not tasks:
+		gcinfo.config._set('processes', {})
+
 	for file in os.listdir(gcinfo.scriptdir+"processes/"):
 		filename = os.fsdecode(file)
 		if filename.endswith(".py"):
 			modname = filename.split(".")[0]
 			printf(f"Loading task module: {modname}", tag='info')
 			importlib.import_module("processes."+modname)
-			clsmembers = inspect.getmembers(sys.modules["processes."+modname], inspect.isfunction)
+			clsmembers = inspect.getmembers(sys.modules["processes."+modname], inspect.isclass)
 			for item in clsmembers:
-				#print(inspect.getfullargspec(item[1]))
+				#print("Loading class")
+				#print(item)
 				try:
-					if inspect.getfullargspec(item[1]).args[0] == 'event':
+					if issubclass(item[1], AOSProcess):
 						printf(f"{item} found", tag='info')
-						gcinfo.process_cache[item[0]] = item[1]
-						if item[0] not in tasks.keys():
-							printf(f"Adding {item[0]} to processes.", tag='info')
-							tasks[item[0]] = False
-							changes = True
-						else:
-							#printf(f"Running {tasks[item[0]]}", tag='info')
-							if tasks[item[0]]:
-								gcinfo.runProcess(item[1], item[0])
+						item[1](gcinfo)
 				except Exception as e:
 					pass#print(e)
-	if changes:
-		printf("Updating processes config, new process have been added...", tag='info')
-		gcinfo.config._set('processes', tasks)	
 		
 def initCacheCommands(gcinfo):
+	gcinfo.commands = {}
+	gcinfo.command_cache = {}
 	commandsf = []
+	
 	printf("Getting Command modules...", tag='info')
 	for file in os.listdir(gcinfo.scriptdir+"ext/"):
 		filename = os.fsdecode(file)
@@ -237,7 +220,6 @@ def initCacheCommands(gcinfo):
 			#print(clsmembers)
 			commandsf += clsmembers
 	
-	
 	invalid_classes = []
 	for item in commandsf:
 		if issubclass(item[1], BaseCommand):
@@ -247,21 +229,31 @@ def initCacheCommands(gcinfo):
 			invalid_classes.append(item)
 	
 	for item in invalid_classes:
-		printf(f"Invalidating {item}")
+		#printf(f"Invalidating {item}")
 		commandsf.remove(item)	
-		dis = gcinfo.config._get('disabled')
-		if not dis:
-			gcinfo.config._set('disabled', [])
-			dis = []
-			
-	gcinfo.commands = commandsf	
+	
+	dis = gcinfo.config._get('disabled')
+	if not dis:
+		gcinfo.config._set('disabled', [])
+		dis = []
 		
+	gcinfo.commands = commandsf	
+	
+class ThreadInterrupt(Exception):
+	pass
+
 def run():
 	global gcinfo
 	with AutomaticSpinner(label="Loading Athena..."):
 		gcinfo = initCreateCore()
 		initCacheProcesses(gcinfo)
 		initCacheCommands(gcinfo)
-	run_cli()
-		
+	try:
+		run_cli()
+	except KeyboardInterrupt:
+		print("Closing.")
+	except ThreadInterrupt:
+		print("Interrupted.")
+	except Exception as e:
+		print(e)
 run()

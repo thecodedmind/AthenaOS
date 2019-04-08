@@ -171,6 +171,8 @@ class Task(BaseCommand):
 		self.inter = True
 		
 	def onTrigger(self, value = ""):
+		if value == "":
+			value = "list"
 		if value.startswith("start "):
 			task = value.split(" ")[1]
 			res = self.host.startProcess(task)
@@ -190,7 +192,14 @@ class Task(BaseCommand):
 				return {'message': f"Problem stopping process {task}, is not running or does not exist."}
 		
 		elif value == "list":
-			return {'output':humanfriendly.text.concatenate(self.host.process_cache.keys())}
+			s = ""
+			for item in self.host.threads:
+				print(item)
+				if self.host.config.data['processes'].get(item):
+					s += f"[\x1b[32mON\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
+				else:
+					s += f"[\x1b[31mOFF\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
+			return {'output':s[:-1]}
 		
 		else:
 			return {'message': f"Invalid process command."}
@@ -360,6 +369,20 @@ class CfgSet(BaseCommand):
 			self.host.config._set(key, val)
 			return {'message': f'Okay, key {key} set to {val}'}
 
+class Refresh(BaseCommand):
+	"""
+	Executes defined terminal command
+	Format: run <code>
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'refresh commands', 'check': 90}]
+		
+	def onTrigger(self, value = ""):
+		self.host.updateCommands(self.host)
+		
 class Bash(BaseCommand):
 	"""
 	Executes defined terminal command
