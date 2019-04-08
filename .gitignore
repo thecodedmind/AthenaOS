@@ -1,3 +1,2 @@
 __pycache__/
-/ext/__pycache__/
-/processes/__pycache__/
+*/__pycache__/
