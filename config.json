@@ -1,7 +1,13 @@
 {
-    "disabled": [
-        "CountTest"
+    "appimage_path": "/home/kaiz0r/Applications/",
+    "bin_ignored_paths": [
+        "/home/kaiz0r/.luarocks/bin"
     ],
+    "disabled": [
+        "CountTest",
+        "RandomTest"
+    ],
+    "disabled_modules": [],
     "events": {
         "op": {
             "data": "This\\nis\\nan\\ntest",
@@ -24,6 +30,7 @@
     "has_updates": true,
     "processes": {
         "AOSProcess": false,
+        "Reader": false,
         "TestProc": false
     },
     "skip_prompts": false,

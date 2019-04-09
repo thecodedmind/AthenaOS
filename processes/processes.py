@@ -8,7 +8,6 @@ class AOSProcess:
 		self.host = host
 		self.host.threads[self.name] = {'object': self}
 		
-		print(self.host.threads)
 		if not self.host.config.data['processes'].get(self.name):
 			pl = self.host.config.data['processes']
 			pl[self.name] = False
@@ -19,19 +18,18 @@ class AOSProcess:
 			self.start()
 		
 	def start(self):
-		#print("Checking")
-		#print(self.host.threads)
-
 		if self.host.threads[self.name].get('process'):
 			return False
 		
 		self.host.printf(f"Running process thread : {self.name}", tag='info')
 		self.process = multiprocessing.Process(target=self.onTrigger, args=())
 		self.host.threads[self.name]['process'] = self.process
-		self.process.daemon = True
-		self.process.start()
 		self.host.config.data['processes'][self.name] = True
 		self.host.config.save()
+		self.process.daemon = True
+		
+		self.process.start()
+
 		return True
 	
 	def stop(self):
@@ -49,9 +47,17 @@ class AOSProcess:
 		while True:
 			print("Root task should not be called.")
 			sleep(5)
+
+class Reader(AOSProcess):
+	def onTrigger(self):
+		while True:
+			sleep(5)
+			#self.process.daemon = False
+			phrase = input("(> ")
+			resp = self.host.processCommands(phrase)
 			
 class TestProc(AOSProcess):
 	def onTrigger(self):
 		while True:
-			print("This does a thing!")
+			print("...")
 			sleep(5)

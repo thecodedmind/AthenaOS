@@ -6,22 +6,23 @@ from textblob import TextBlob, Word
 import humanfriendly
 import random
 
-class CountTest(commands.BaseCommand):
-	def __init__(self, host):
-		super().__init__(host)
-		self.phrases = [{'message': 'addcount', 'check':100}]
-		print("Started counter...")
+class RandomTest(commands.BaseCommand):
+	def onStart(self):
+		self.addListener("this is a test", 90)
+		self.hidden = True
+		print("This has run")
 		
-		self.count = 0
+	def onClose(self):
+		self.phrases = []
+		print("It closed")
+	
+	def onTrigger(self, value):
+		print("Read")
 		
-	def onTrigger(self):
-		self.count += 1
-		return self.message(f"Count is now {self.count}")
-
 class EightBall(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [self.message("8ball")]
+		self.addListener("8ball")
 		self.inter = True
 	
 	def onTrigger(self, value):
@@ -48,10 +49,25 @@ class EightBall(commands.BaseCommand):
 		res = random.choice(responses)
 		return self.message(res.capitalize()+".")
 
+class RollRNG(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("roll")
+		self.addListener("rng")
+		self.inter = True
+		
+	def onTrigger(self, value):
+		if value == "":
+			value = "10"
+		if not value.isdigit():
+			return self.message("Value must be a number.")
+		random.randint(0, int(value))
+		return self.message(f"You rolled: {random.randint(0, int(value))}.")
+	
 class Dice(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [self.message("roll"), self.message("dice")]
+		self.addListener("dice")
 		self.inter = True
 		
 	def onTrigger(self, value):
@@ -94,8 +110,8 @@ class Dice(commands.BaseCommand):
 class Flip(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'flip a coin', 'check': 90}]
-	
+		self.addListener("flip a coin", 90)
+		
 	def onTrigger(self):
 		if random.random() > 0.5:
 			return self.message(f"It landed Heads!")
@@ -120,7 +136,8 @@ class Repeat(commands.BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'repeat'}, {'message': 'say'}]
+		self.addListener("repeat")
+		self.addListener("say")
 		self.inter = True
 	
 	def onTrigger(self, value = ""):
@@ -140,12 +157,10 @@ class Translate(commands.BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'translate'}]
+		self.addListener("translate")
 		self.inter = True
 	
 	def translateWord(self, text, lang):
-		print(text)
-		print(lang)
 		try:
 			blob = TextBlob(text)
 			try:
@@ -182,7 +197,7 @@ class Define(commands.BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'define'}]
+		self.addListener("define")
 		self.inter = True
 	
 	def defineWord(self, word):
@@ -226,7 +241,8 @@ class CallMeName(commands.BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'call me'}, {'message': 'change my name to'}]
+		self.addListener("call me")
+		self.addListener("change my name to")
 		self.inter = True
 		
 	def onTrigger(self, value = ""):
@@ -239,7 +255,8 @@ class WhoAmI(commands.BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'who am i?', 'check': 90}, {'message': 'what is my name?', 'check': 90}]
+		self.addListener("who am i?", 90)
+		self.addListener("what is my name?", 90)
 		
 	def onTrigger(self):
-		return {'message': f"You are {self.host.config._get('username')}"}
+		return {'message': f"You are {self.host.config._get('username')}."}

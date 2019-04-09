@@ -31,7 +31,10 @@ class CommandInfo:
 		self.threads = {}
 		self.master_host = "https://github.com/codedthoughts/AthenaOS/raw/master/"
 		self.master_manifest = self.master_host+"/manifest.json"
-	
+		self.formatting = Formatting
+		self.colours = Color
+		self.reset_f = Formatting.Reset
+		
 	def insert(self, text):
 		readline.insert_text(text)
 		readline.redisplay()
@@ -60,8 +63,6 @@ class CommandInfo:
 			return {'message': "Invalid event data."}
 		
 	def startProcess(self, task):
-		printf("Starting process thread...", tag='info')
-		printf(self.config.data['processes'][task])
 		if self.config.data['processes'][task]:
 			return False
 		
@@ -69,8 +70,6 @@ class CommandInfo:
 		return True
 	
 	def stopProcess(self, task):
-		print(self.threads)
-		printf("Stopping process thread...", tag='info')
 		if not self.config.data['processes'][task]:
 			return False
 		
@@ -118,18 +117,20 @@ def say(text):
 	os.system(f'padsp flite -voice file://{gcinfo.scriptdir}cmu_us_clb.flitevox -t "{text}" &')	
 
 def parseResult(command, phrase):
+	#print(phrase)
 	for item in command.phrases:
-		if item['message'] in phrase:
-			return phrase.replace(item['message'], "").strip()
+		#print(item)
+		if phrase.startswith(item['message']):
+			length = len(item['message'])
+			return phrase[length:].strip()#phrase.replace(item['message'], "").strip()
 		
 def process_commands(phrase):
 	for item in gcinfo.commands:
 		if issubclass(item[1], BaseCommand):
-			inst = gcinfo.command_cache[item[0]]#item[1](gcinfo)
-			#print(inst)
-			#print(inst.inter)
+			inst = gcinfo.command_cache[item[0]]
 			if inst.check(phrase):
 				if inst.inter:
+					#print(item)
 					value = parseResult(inst, phrase)
 					#print(f"Got value {value}")
 					return_data = inst.onTrigger(value)
@@ -182,49 +183,59 @@ def initCreateCore():
 	return gcinfo
 
 def initCacheProcesses(gcinfo):
-	printf("Loading background processes...", tag='info')
+	printf("Getting background processes...", tag='info')
 	tasks = gcinfo.config._get('processes')
 	if not tasks:
 		gcinfo.config._set('processes', {})
-
+		
 	for file in os.listdir(gcinfo.scriptdir+"processes/"):
 		filename = os.fsdecode(file)
 		if filename.endswith(".py"):
 			modname = filename.split(".")[0]
-			printf(f"Loading task module: {modname}", tag='info')
+			printf(f"Loading process module: {modname}", tag='info')
 			importlib.import_module("processes."+modname)
 			clsmembers = inspect.getmembers(sys.modules["processes."+modname], inspect.isclass)
 			for item in clsmembers:
-				#print("Loading class")
-				#print(item)
 				try:
-					if issubclass(item[1], AOSProcess):
-						printf(f"{item} found", tag='info')
+					if issubclass(item[1], AOSProcess) and item[0] != "AOSProcess":
+						printf(f"Validated {item}", tag='info')
 						item[1](gcinfo)
 				except Exception as e:
-					pass#print(e)
+					pass
 		
 def initCacheCommands(gcinfo):
 	gcinfo.commands = {}
 	gcinfo.command_cache = {}
 	commandsf = []
 	
+	off_modules = gcinfo.config._get('disabled_modules')
+	if not off_modules:
+		gcinfo.config._set('disabled_modules', [])
+		
+	off_commands = gcinfo.config._get('disabled')
+	if not off_commands:
+		gcinfo.config._set('disabled', [])
+		
 	printf("Getting Command modules...", tag='info')
 	for file in os.listdir(gcinfo.scriptdir+"ext/"):
 		filename = os.fsdecode(file)
 		if filename.endswith(".py"):
 			modname = filename.split(".")[0]
-			printf(f"Loading command module: {modname}", tag='info')
-			importlib.import_module("ext."+modname)
-			clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
-			#print(clsmembers)
-			commandsf += clsmembers
+			if f"ext.{modname}" not in off_modules:
+				printf(f"Loading command module: {modname}", tag='info')
+				importlib.import_module("ext."+modname)
+				clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
+				#print(clsmembers)
+				commandsf += clsmembers
+			else:
+				print(f"Not loading {modname}")
 	
 	invalid_classes = []
 	for item in commandsf:
 		if issubclass(item[1], BaseCommand):
 			printf(f"Validated {item}", tag='info')
 			gcinfo.command_cache[item[0]] = item[1](gcinfo)
+			gcinfo.command_cache[item[0]].onStart()
 		else:
 			invalid_classes.append(item)
 	

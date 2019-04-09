@@ -25,12 +25,21 @@ class BaseCommand:
 	self.alias defines an alias, only used for Help searching for now.
 	"""
 	def __init__(self, host):
-		self.phrases = {}
+		self.phrases = []
 		self.inter = False
 		self.host = host
 		self.alias = type(self).__name__
 		self.hidden = False
 		self.disabled = False
+	
+	def addListener(self, text, check = 100):
+		#Helper function for adding listeners
+		data = {'message': text, 'check': check}
+		if data in self.phrases:
+			printf(f"Ignoring duplicate listener for {self.name}.\n{data}", tag='output')
+			return
+		
+		self.phrases.append(data)
 		
 	def message(self, text):
 		#Helper function for quick access to returning just a message.
@@ -59,12 +68,23 @@ class BaseCommand:
 					return True
 	
 	def onTrigger(self, value = ""):
+		"""Called when the command is executed."""
 		self.onTrigger(self, value)
 	
 	def hold(self, message):
+		"""Helper function to set the command in to hold mode, waiting for a response"""
 		return {'message': message, 'code': 'hold', 'held': self}
 	
 	def onHold(self, value):
+		"""Like onTrigger but ran after being held"""
+		pass
+	
+	def onStart(self):
+		"""Run on startup."""
+		pass
+	
+	def onClose(self):
+		"""Run on shutdown"""
 		pass
 	
 class WaitTemplate(BaseCommand):
@@ -77,7 +97,6 @@ class WaitTemplate(BaseCommand):
 		super().__init__(host)
 		self.phrases = [{'message': 'wait'}, {'message':'hold'}]
 		self.inter = True
-		#self.alias = "hold"
 		self.hidden = True
 		
 	def onTrigger(self, value = ""):
@@ -95,7 +114,7 @@ class Quit(BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
 		self.phrases = [{'message': 'quit', 'check': 100}, {'message': 'exit', 'check': 100}]
-		
+	
 	def onTrigger(self, value = ""):
 		if self.host.promptConfirm("Are you sure?"):
 			return {'message': 'Goodbye.', 'code': 'quit'}
@@ -112,11 +131,11 @@ class CommandsList(BaseCommand):
 		for item in self.host.commands:
 			if not self.host.command_cache[item[0]].hidden and item[0].lower() != "basecommand":
 				if item[0] in self.host.config._get('disabled'):
-					c += f"[\x1b[31mOFF\x1b[0m] {self.host.command_cache[item[0]].__class__.__module__}.{item[0]}\n"
+					c += f" [\x1b[31mOFF\x1b[0m] {self.host.command_cache[item[0]].__class__.__module__}.{item[0]}\n"
 				else:
-					c += f"[\x1b[32mON\x1b[0m] {self.host.command_cache[item[0]].__class__.__module__}.{item[0]}\n"
+					c += f" [\x1b[32mON\x1b[0m] {self.host.command_cache[item[0]].__class__.__module__}.{item[0]}\n"
 		
-		return self.output(c)
+		return self.output(c[:-1])
 			
 class Help(BaseCommand):
 	"""
@@ -145,7 +164,7 @@ class Help(BaseCommand):
 		
 		for item in self.host.commands:
 			inst = self.host.command_cache[item[0]]#item[1](self.host)
-			if inst.check(value):#if value.lower() == item[0].lower() or value.lower() == inst.alias:
+			if inst.check(value) or value == item[0]:#if value.lower() == item[0].lower() or value.lower() == inst.alias:
 				return {'output': inst.getHelp()}
 			
 	def onHeld(self, value):
@@ -154,7 +173,7 @@ class Help(BaseCommand):
 		
 		for item in self.host.commands:
 			inst = self.host.command_cache[item[0]]#item[1](self.host)
-			if inst.check(value):#if value.lower() == item[0].lower() or value.lower() == inst.alias:
+			if inst.check(value) or value == item[0]:#if value.lower() == item[0].lower() or value.lower() == inst.alias:
 				return {'output': inst.getHelp()}
 			
 		return self.hold("That command wasn't found, try again?")
@@ -196,9 +215,9 @@ class Task(BaseCommand):
 			for item in self.host.threads:
 				print(item)
 				if self.host.config.data['processes'].get(item):
-					s += f"[\x1b[32mON\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
+					s += f" [\x1b[32mON\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
 				else:
-					s += f"[\x1b[31mOFF\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
+					s += f" [\x1b[31mOFF\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
 			return {'output':s[:-1]}
 		
 		else:
@@ -216,13 +235,15 @@ class CfgGet(BaseCommand):
 		super().__init__(host)
 		self.phrases = [{'message': 'get'}]
 		self.inter = True
-		self.alias = "get"
 		
 	def onTrigger(self, value = ""):
 		if value == "":
 			c = ""
 			for item in self.host.config.data.keys():
-				c += f"{item} = {self.host.config._get(item)} ({type(self.host.config._get(item))})\n"
+				if type(self.host.config._get(item)) == dict:
+					c += f"{item} = {json.dumps(self.host.config._get(item), indent=4)}\n"
+				else:
+					c += f"{item} = {self.host.config._get(item)} ({type(self.host.config._get(item))})\n"
 			
 			return {'output': c[:-1]}
 		
@@ -231,11 +252,78 @@ class CfgGet(BaseCommand):
 			
 		#print(value)
 		data = self.host.config._get(value)
+		#print(data)
 		if data != "":
-			return {'output': data}
+			if type(data) == dict:
+				data = json.dumps(data, indent=4)
+			return {'output': f"{value} = {data}"}
 		else:
 			return {'message': "Config var isn't set."}
 
+class Module(BaseCommand):
+	"""
+	Manages modules
+	Format: module <command> <args>
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [self.message("module"), self.message("mods"), self.message("modules")]
+		self.inter = True
+		
+	def onTrigger(self, value = ""):
+		if value == "":
+			value = "list"
+			
+		if value == "list":
+			mods = []
+			for item in self.host.command_cache:
+				#print(item)
+				if self.host.command_cache[item].__class__.__module__ not in mods:
+					mods.append(self.host.command_cache[item].__class__.__module__)
+			c = ""
+			for item in mods:
+				if item in self.host.config._get('disabled_modules'):
+					c += f" [\x1b[31mOFF\x1b[0m] {item}\n"
+				else:
+					c += f" [\x1b[32mON\x1b[0m] {item}\n"
+			
+			return self.output(c[:-1])
+		
+		if value.startswith('enable '):
+			value = value[7:]
+			
+			dl = self.host.config._get('disabled_modules')
+			if value in dl:
+				dl.remove(value)
+				self.host.config._set('disabled_modules', dl)
+				return self.message(f"Enabled {value} module.")
+			else:
+				return self.message(f"Module {value} isn't disabled")
+			
+		if value.startswith("disable "):
+			value = value[8:]
+			locked_vars = ['commands']
+			if value in locked_vars:
+				return self.message(f"Can't disable {value}, that is a core module.")
+			
+			passed = False
+			for item in self.host.command_cache:
+				if value == self.host.command_cache[item].__class__.__module__:
+					passed = True
+			
+			if not passed:
+				return self.message(f"Module {value} does not exist. Note that command names are case sensative references to their file name.")
+			
+			dl = self.host.config._get('disabled_modules')
+			if value not in dl:
+				dl.append(value)
+				self.host.config._set('disabled_modules', dl)
+				return self.message(f"Disabled {value} module.")
+			else:
+				return self.message(f"Command {value} already disabled")
+		
 class Disable(BaseCommand):
 	"""
 	Disables a command
@@ -260,8 +348,12 @@ class Disable(BaseCommand):
 		
 		if not passed:
 			return self.message(f"Command {value} does not exist. Note that command names are case sensative references to their class name.")
+		
+		
+		
 		dl = self.host.config._get('disabled')
 		if value not in dl:
+			self.host.command_cache[value].onClose()
 			dl.append(value)
 			self.host.config._set('disabled', dl)
 			return self.message(f"Disabled {value} command.")
@@ -284,6 +376,7 @@ class Enable(BaseCommand):
 		dl = self.host.config._get('disabled')
 
 		if value in dl:
+			self.host.command_cache[value].onStart()
 			dl.remove(value)
 			self.host.config._set('disabled', dl)
 			return self.message(f"Enabled {value} command.")
