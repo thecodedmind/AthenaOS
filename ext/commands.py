@@ -328,6 +328,28 @@ class Module(BaseCommand):
 				return self.message(f"Disabled {value} module.")
 			else:
 				return self.message(f"Command {value} already disabled")
+
+		if value.startswith("find "):
+			value = value[8:]
+			
+			req = requests.get(self.host.master_manifest).text
+			remote_manifest = json.loads(req)
+			
+			s = ""
+			for item in remote_manifest['external']:
+				if value.lower() in item.lower():
+					s += f"{item} : {remote_manifest['external'][item]['url']}\n"
+					
+			return self.output(s[:-1])
+			
+		if value == "find":			
+			req = requests.get(self.host.master_manifest).text
+			remote_manifest = json.loads(req)
+			s = ""
+			for item in remote_manifest['external']:
+				s += f"{item} : {remote_manifest['external'][item]['url']}\n"
+					
+			return self.output(s[:-1])
 		
 		if value.startswith("install "):
 			value = value[8:]
@@ -337,11 +359,11 @@ class Module(BaseCommand):
 			
 			for item in remote_manifest['external']:
 				if value.lower() in item.lower():
-					target = item['url']
+					target = remote_manifest['external'][item]['url']
 					
 			if self.host.promptConfirm(f"Will try to download {value} from {target}"):
 				self.host.getFile(target, 'ext/', options = '-N -q')
-				return self.message(f"Installed {value}")
+				return self.message(f"Installed {value}. Commands will be enabled after running 'refresh commands' or restarting the client.")
 			else:
 				return self.message("Cancelling.")
 
