@@ -12,19 +12,5 @@
             "version": "19.4.6",
             "url": "https://github.com/codedthoughts/AthenaOS/raw/master/ext/kext.py"
         }
-    },
-	"external":{
-		"bin_launcher": {
-			"desc": "A simple binary launcher manager.",
-			"url": "https://github.com/codedthoughts/aosr-modules/raw/master/bin_launcher.py"
-		},
-		"appimage": {
-			"desc": "A simple appimage launcher manager.",
-			"url": "https://github.com/codedthoughts/aosr-modules/raw/master/appimage.py"
-		},
-		"pkmn": {
-			"desc": "Interfacing with the pokeapi client.",
-			"url": "https://github.com/codedthoughts/aosr-modules/raw/master/pkmn.py"
-		}
-	}
+    }
 }

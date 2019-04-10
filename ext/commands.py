@@ -332,34 +332,36 @@ class Module(BaseCommand):
 		if value.startswith("find "):
 			value = value[8:]
 			
-			req = requests.get(self.host.master_manifest).text
+			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
 			
 			s = ""
-			for item in remote_manifest['external']:
+			for item in remote_manifest:
 				if value.lower() in item.lower():
-					s += f"{item} : {remote_manifest['external'][item]['url']}\n"
+					s += f"{item} : {remote_manifest[item]['url']}\n{remote_manifest[item]['desc']}\n"
 					
 			return self.output(s[:-1])
 			
 		if value == "find":			
-			req = requests.get(self.host.master_manifest).text
+			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
+			#print(remote_manifest)
 			s = ""
-			for item in remote_manifest['external']:
-				s += f"{item} : {remote_manifest['external'][item]['url']}\n"
+			for item in remote_manifest:
+				#print(item)
+				s += f"{item} : {remote_manifest[item]['url']}\n{remote_manifest[item]['desc']}\n"
 					
 			return self.output(s[:-1])
 		
 		if value.startswith("install "):
 			value = value[8:]
 			
-			req = requests.get(self.host.master_manifest).text
+			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
 			
-			for item in remote_manifest['external']:
+			for item in remote_manifest:
 				if value.lower() in item.lower():
-					target = remote_manifest['external'][item]['url']
+					target = remote_manifest[item]['url']
 					
 			if self.host.promptConfirm(f"Will try to download {value} from {target}"):
 				self.host.getFile(target, 'ext/', options = '-N -q')

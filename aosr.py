@@ -31,6 +31,7 @@ class CommandInfo:
 		self.threads = {}
 		self.master_host = "https://github.com/codedthoughts/AthenaOS/raw/master/"
 		self.master_manifest = self.master_host+"/manifest.json"
+		self.modules_manifest = "https://github.com/codedthoughts/aosr-modules/raw/master/manifest.json"
 		self.formatting = Formatting
 		self.colours = Color
 		self.reset_f = Formatting.Reset
