@@ -283,12 +283,17 @@ class Module(BaseCommand):
 				if self.host.command_cache[item].__class__.__module__ not in mods:
 					mods.append(self.host.command_cache[item].__class__.__module__)
 			c = ""
-			for item in mods:
+			for item in mods:					
 				if item in self.host.config._get('disabled_modules'):
-					c += f" [\x1b[31mOFF\x1b[0m] {item}\n"
+					c += f" [\x1b[31mOFF\x1b[0m] "
 				else:
-					c += f" [\x1b[32mON\x1b[0m] {item}\n"
-			
+					c += f" [\x1b[32mON\x1b[0m] "
+				
+				if item in self.host.core_modules:
+					c += f"{self.host.formatting.Bold}{item}{self.host.reset_f}\n"
+				else:
+					c += f"{item}\n"
+					
 			return self.output(c[:-1])
 		
 		if value.startswith('enable '):
@@ -324,6 +329,45 @@ class Module(BaseCommand):
 			else:
 				return self.message(f"Command {value} already disabled")
 		
+		if value.startswith("install "):
+			value = value[8:]
+			
+			req = requests.get(self.host.master_manifest).text
+			remote_manifest = json.loads(req)
+			
+			for item in remote_manifest['external']:
+				if value.lower() in item.lower():
+					target = item['url']
+					
+			if self.host.promptConfirm(f"Will try to download {value} from {target}"):
+				self.host.getFile(target, 'ext/', options = '-N -q')
+				return self.message(f"Installed {value}")
+			else:
+				return self.message("Cancelling.")
+
+		if value.startswith("get "):
+			value = value[4:]
+					
+			if self.host.promptConfirm(f"Will try to download {value} as an extension. (NOTE: This URL may not be secure or verified.)"):
+				self.host.getFile(value, 'ext/', options = '-N -q')
+				return self.message(f"Installed file.")
+			else:
+				return self.message("Cancelling.")
+						
+		if value.startswith("uninstall "):
+			value = value[10:]
+			if not value.startswith("ext."):
+				value = f"ext.{value}"
+			real_filepath = f"{self.host.scriptdir}ext/{value[4:]}.py"
+			
+			if value not in self.host.core_modules:
+				if self.host.promptConfirm(f"Will try to permenantly delete {real_filepath}"):
+					os.system(f"rm {real_filepath}")
+					return self.message(f"Uninstalled {value}")
+				else:
+					return self.message("Cancelling.")
+			else:
+				return self.message(f"{value} is a core module, can't be uninstalled.")
 class Disable(BaseCommand):
 	"""
 	Disables a command

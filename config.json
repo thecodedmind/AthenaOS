@@ -34,7 +34,7 @@
         "TestProc": false
     },
     "skip_prompts": false,
-    "tts": false,
+    "tts": true,
     "update_check_on_startup": false,
     "username": "Kyle"
 }

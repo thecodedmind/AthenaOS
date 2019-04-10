@@ -34,6 +34,7 @@ class CommandInfo:
 		self.formatting = Formatting
 		self.colours = Color
 		self.reset_f = Formatting.Reset
+		self.core_modules = ['ext.commands', 'ext.kext']
 		
 	def insert(self, text):
 		readline.insert_text(text)

@@ -121,11 +121,18 @@ class Flip(commands.BaseCommand):
 class Choice(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [self.message("choice"), self.message("choose")]
+		self.addListener("choose between")
+		self.addListener("choose from")
 		self.inter = True
 	
 	def onTrigger(self, value):
+		value = value.replace(",", "")
+		value = value.lower()
 		choices = value.split()
+		for item in choices:
+			if item == "and" or item == "or":
+				choices.remove(item)
+		
 		return self.message(f"Between {humanfriendly.text.concatenate(choices)}, I choose {random.choice(choices)}.")
 	
 class Repeat(commands.BaseCommand):
