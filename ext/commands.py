@@ -450,7 +450,58 @@ class Enable(BaseCommand):
 			return self.message(f"Enabled {value} command.")
 		else:
 			return self.message(f"Command {value} already enabled")
+	
+class Aliases(BaseCommand):
+	"""
+	Allows defining of aliases for commands.
+	Once defined, for example if KEY was set as 'me', in normal commands, if you enter the alias character (default %) then me, then that will be replaced with the message set.
+	Format: alias <key> <new message>
+	If no key or message given, will output all current aliases.
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'alias'}]
+		self.inter = True
 		
+	def onTrigger(self, value = ""):
+		aliases = self.host.config._get('aliases', {})
+		if value == "":
+			if len(aliases) == 0:
+				return self.message("No aliases set.")
+			
+			s = ""
+			for alias in aliases:
+				s += f"{alias} = {aliases[alias]}\n"
+			
+			return self.output(s[:-1])
+			
+		key = value.split()[0]
+		msg = value.split()[1:]
+		msg = ' '.join(msg)
+		aliases[key] = msg
+		self.host.config._set('aliases', aliases)
+		return self.message("Alias set.")
+	
+class Unalias(BaseCommand):
+	"""
+	Removes an alias
+	Format: unalias <key>
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'unalias'}]
+		self.inter = True
+		
+	def onTrigger(self, value = ""):
+		aliases = self.host.config._get('aliases', {})
+		del aliases[value]
+		self.host.config._set('aliases', aliases)
+		return self.message("Alias set.")
+				
 class CfgUnSet(BaseCommand):
 	"""
 	Deletes a command variable.

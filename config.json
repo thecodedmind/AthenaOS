@@ -1,4 +1,9 @@
 {
+    "alias_character": "$",
+    "aliases": {
+        "dx": "/home/kaiz0r/.wine/drive_c/Deus Ex GOTY",
+        "me": "Kaiser"
+    },
     "appimage_path": "/home/kaiz0r/Applications/",
     "bin_ignored_paths": [
         "/home/kaiz0r/.luarocks/bin"
@@ -34,7 +39,7 @@
         "TestProc": false
     },
     "skip_prompts": false,
-    "tts": true,
+    "tts": false,
     "update_check_on_startup": false,
     "username": "Kyle"
 }

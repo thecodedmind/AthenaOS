@@ -5,19 +5,90 @@ import textblob
 from textblob import TextBlob, Word
 import humanfriendly
 import random
+import shlex
+import os
 
-class RandomTest(commands.BaseCommand):
-	def onStart(self):
-		self.addListener("this is a test", 90)
-		self.hidden = True
-		print("This has run")
+class Speak(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("speak", 95)
+		self.addListener("speak up", 90)
+	
+	def onTrigger(self):
+		if not self.host.config._get('tts'):
+			self.host.config._set("tts", True)
+			return self.message("Speech enabled.")
+		else:
+			return self.message("Speech is already on.")
 		
-	def onClose(self):
-		self.phrases = []
-		print("It closed")
+class Quieten(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("quiet", 95)
+		self.addListener("be quiet", 90)
+		self.addListener("no talking", 95)
+		self.addListener("shush", 95)
+		self.addListener("shhh", 90)
+	
+	def onTrigger(self):
+		if not self.host.config._get('tts'):
+			return self.message("Already quiet.")
+		else:
+			self.host.config._set("tts", False)
+			return self.message("Okay, speech off.")
+		
+class DiskSearchLocate(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("disk")
+		self.inter = True
+	
+	def run_dchk(self, path, check, fileext = ""):
+		if not path.endswith("/"):
+			path = path+"/"
+		full = "Checking "+path+" *"+fileext+" for "+check+"...\n"
+		found = []
+		
+		try:
+			for file in os.listdir(path):
+				try:
+					filename = os.fsdecode(file)
+					if not os.path.isfile(path+filename):
+						full += f"Skipping directory {filename}\n"
+					else:
+						if filename.endswith(fileext):
+							full += f"Opening {filename}\n"
+							with open(path+filename, "rb") as fl:
+								cont = str(fl.read(), "latin-1")
+								if check.lower() in cont.lower():
+									found.append(filename)
+								
+				except Exception as e:
+					full += f"{e}\n"
+				
+		except Exception as e:
+			return e
+		
+		full += f"{len(found)} found.\n{self.host.humanizeList(found)}"
+		return full
 	
 	def onTrigger(self, value):
-		print("Read")
+		if value.startswith("locate "):
+			value = value[7:]
+			print("Searching for "+value)
+			return self.output(self.host.terminal(f"locate {value}"))
+		
+		elif value.startswith("inspect "):
+			value = value[8:]
+			v = shlex.split(value)
+			if len(v) < 3:
+				v.append("")
+				
+			if len(v) < 3:
+				return self.message("Missing an argument for that.")
+			
+			s = self.run_dchk(v[0], v[1], v[2])
+			return self.output(s)
 		
 class EightBall(commands.BaseCommand):
 	def __init__(self, host):

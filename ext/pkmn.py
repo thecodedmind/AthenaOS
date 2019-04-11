@@ -32,13 +32,13 @@ class PokedexCommand(commands.BaseCommand):
 		tk = tkinter.Tk()
 		
 		tk.title(self.pokemon['name'].capitalize())
-		self.photo = tkinter.PhotoImage(file=self.client.image_cache+self.search.lower()+'.gif')
+		self.photo = tkinter.PhotoImage(file=self.client.image_cache+self.pokemon['name'].lower()+'.gif')
 		label = tkinter.Label(tk, image=self.photo)
 		label.image = self.photo
 		label.grid(row=0, column=0, rowspan=20)
 		
 		r = 2
-		tkinter.Label(tk, text=f"Name: {self.pokemon['name'].capitalize()}").grid(row=0, column=1)
+		tkinter.Label(tk, text=f"Name: {self.pokemon['name'].capitalize()} (ID {self.pokemon['id']})").grid(row=0, column=1)
 		tkinter.Label(tk, text=f"Type(s): {self.client.getTypes(self.search.lower())}").grid(row=1, column=1)
 		for item in self.client.getTypes(self.search.lower()):
 			typeobj = self.client.typeEffectiveness(item)
@@ -75,13 +75,34 @@ class PokedexCommand(commands.BaseCommand):
 		f = tk.mainloop()
 
 	def onTrigger(self, value):
-		if value.startswith("type "):
-			_t = value[:-5]
-			s = self.client.typeEffectiveness(_t)
-			return self.output(s)
-		
 		if self.disabled:
 			return self.message("Pokedex API not available. Download from http://github.com/codedthoughts/pokedex")
+		
+		if value.startswith("type "):
+			_t = value.split(" ")[1]
+			f = ""
+			typeobj = self.client.typeEffectiveness(_t)
+			if typeobj.get('error'):
+				return self.output(f"Error finding the type.")
+			if len(typeobj['supereffective']) > 0:
+				f += f"{_t} is super effective against {humanfriendly.text.concatenate(typeobj['supereffective'])}\n"
+
+			if len(typeobj['superweak']) > 0:
+				f += f"{_t} is super weak to {humanfriendly.text.concatenate(typeobj['superweak'])}\n"
+
+			if len(typeobj['resists']) > 0:
+				f += f"{_t} takes half damage from {humanfriendly.text.concatenate(typeobj['resists'])}\n"
+
+			if len(typeobj['halfdmgagainst']) > 0:
+				f += f"{_t} does half damage to {humanfriendly.text.concatenate(typeobj['halfdmgagainst'])}\n"
+
+			if len(typeobj['noeffecton']) > 0:
+				f += f"{_t} has no effect on {humanfriendly.text.concatenate(typeobj['noeffecton'])}\n"
+
+			if len(typeobj['immuneto']) > 0:
+				f += f"{_t} completely resists {humanfriendly.text.concatenate(typeobj['immuneto'])}\n"
+
+			return self.output(f[:-1])
 		
 		self.pokemon = self.client.pokemon(value)
 		if self.pokemon['name'].startswith("ERROR: "):

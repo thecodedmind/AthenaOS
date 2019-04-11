@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import subprocess
 import importlib
 import inspect
 import sys
@@ -36,11 +37,14 @@ class CommandInfo:
 		self.colours = Color
 		self.reset_f = Formatting.Reset
 		self.core_modules = ['ext.commands', 'ext.kext']
-		
-	def insert(self, text):
-		readline.insert_text(text)
-		readline.redisplay()
-		
+	
+	def terminal(self, command):
+		res = subprocess.run(command.split(" "), stdout=subprocess.PIPE)
+		return str(res.stdout,"latin-1")	
+	
+	def humanizeList(self, ls):
+		return humanfriendly.text.concatenate(ls)
+	
 	def getFile(self, url, save_to = "", *, options = ""):
 		out_dir = self.scriptdir+save_to
 		os.system(f'wget {url} -P {out_dir} {options}&')	
@@ -125,7 +129,19 @@ def parseResult(command, phrase):
 		if phrase.startswith(item['message']):
 			length = len(item['message'])
 			return phrase[length:].strip()#phrase.replace(item['message'], "").strip()
-		
+
+def checkAliases(message):
+	aliases = gcinfo.config._get('aliases', {})
+	ach = gcinfo.config._get('alias_character', "%")
+	if len(aliases) == 0:
+		return message
+	
+	for item in aliases:
+		if f"{ach}{item}" in message:
+			message = message.replace(f"{ach}{item}", aliases[item])
+			
+	return message
+
 def process_commands(phrase):
 	for item in gcinfo.commands:
 		if issubclass(item[1], BaseCommand):
@@ -134,6 +150,7 @@ def process_commands(phrase):
 				if inst.inter:
 					#print(item)
 					value = parseResult(inst, phrase)
+					value = checkAliases(value)
 					#print(f"Got value {value}")
 					return_data = inst.onTrigger(value)
 				else:
