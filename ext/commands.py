@@ -594,7 +594,67 @@ class Refresh(BaseCommand):
 		
 	def onTrigger(self, value = ""):
 		self.host.updateCommands(self.host)
+
+class Logs(BaseCommand):
+	"""
+	Log manager
+	
+		log - Shows all log groups
+		log <group> - Shows logs in specific group
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'logs'}, {'message':'log'}]
+		self.inter = True
+
+	def onTrigger(self, value = ""):
+		if value == "":
+			s = ""
+			for item in list(self.host.logs.data.keys()):
+				if len(self.host.logs._get(item)) > 0:
+					s += f" {self.host.formatting.Bold}{item}{self.host.reset_f} [{len(self.host.logs._get(item))}]\n"
+			
+			return self.output(s[:-1])
 		
+		data = self.host.logs._get(value, [])
+		if len(data) == 0:
+			return self.message(f"No logs for {value}")
+		
+		s = f"-- Log for {self.host.formatting.Bold}{value}{self.host.reset_f} ({len(data)} items) --\n"
+		
+		for item in data:
+			s += f"{self.host.formatting.Bold}{item['timestamp']}{self.host.reset_f}: {item['message']}\n"
+		
+		return self.output(s[:-1])
+	
+class PurgeLogs(BaseCommand):
+	"""
+	Log manager
+	
+		log - Shows all log groups
+		log <group> - Shows logs in specific group
+		
+	[BASE]
+	~Kaiser
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'purge log'}]
+		self.inter = True
+
+	def onTrigger(self, value = ""):
+		if value == "":
+			return self.message("A log key is needed.")
+		
+		data = self.host.logs._get(value, [])
+		if len(data) == 0:
+			return self.message(f"No logs for {value}")
+		
+		self.host.logs._set(value, [])
+		return self.message(f"Purged log {value}")
+	
 class Bash(BaseCommand):
 	"""
 	Executes defined terminal command
@@ -636,7 +696,7 @@ class CrEvent(BaseCommand):
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [self.message("event"), self.message("mod event")]
+		self.addListener("event")
 		self.inter = True
 	
 	def onTrigger(self, value = ""):
@@ -671,7 +731,7 @@ class CrEvent(BaseCommand):
 		event_data = value.split(" ")[2:]
 		event_data = ' '.join(event_data)
 		
-		valid_types = ['message', 'eval', 'output']
+		valid_types = ['message', 'eval', 'output', 'terminal']
 		if event_type not in valid_types:
 			return self.message(f"{event_type} is an invalid type.")
 		

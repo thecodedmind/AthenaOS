@@ -8,6 +8,193 @@ import random
 import shlex
 import os
 
+def isfloat(value):
+	try:
+		float(value)
+		return True
+	except ValueError:
+		return False
+		
+class CountersAdd(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("add")
+		self.inter = True
+		
+	def onTrigger(self, value = ""):
+		counters = self.host.config._get('counters', {})
+		args = shlex.split(value)
+		if len(args) < 2:
+			return self.message("Missing argument, example format is 'add x to y'.")
+		
+		if len(args) == 2:
+			vmod = args[0]
+			key = args[1]
+
+		if len(args) == 3:
+			if args[1] != "to":
+				return self.message("Didn't understand the input.")
+			
+			vmod = args[0]
+			key = args[2]
+			if not vmod.isdigit() and not isfloat(vmod):
+				return self.message("Value is not a valid number.")
+			
+			try:
+				counters[key] += float(vmod)
+			except:
+				counters[key] = float(vmod)
+				
+			self.host.logAction('counters_'+key, f"ADDED - Now {counters[key]}")
+			self.host.config._set('counters', counters)
+			return self.message(f"{key} is now {counters[key]}")
+
+class CountersSub(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("take")
+		self.inter = True
+		
+	def onTrigger(self, value = ""):
+		counters = self.host.config._get('counters', {})
+		args = shlex.split(value)
+		if len(args) < 2:
+			return self.message("Missing argument, example format is 'take x from y'.")
+		
+		if len(args) == 2:
+			vmod = args[0]
+			key = args[1]
+
+		if len(args) == 3:
+			if args[1] != "from":
+				return self.message("Didn't understand the input.")
+			vmod = args[0]
+			key = args[2]
+			if not vmod.isdigit() and not isfloat(vmod):
+				return self.message("Value is not a valid number.")
+			
+			try:
+				counters[key] -= float(vmod)
+			except:
+				counters[key] = 0.0
+				counters[key] -= float(vmod)
+			self.host.logAction('counters_'+key, f"SUBTRACTED - Now {counters[key]}")
+			self.host.config._set('counters', counters)
+			return self.message(f"{key} is now {counters[key]}")
+	
+class CountersController(commands.BaseCommand):
+	"""
+	Counter manager
+	
+	Commands:
+		counters [counter name] - If no sub-command given, shows all counters. Otherwises shows specific counter.
+		counters add/sub/div/mul/set <counter name> <value> - Modifies value of counter
+		counters delete <counter name> - Deletes a counter
+	"""
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("counters")
+		self.addListener("counter")
+		
+		self.inter = True
+
+	def onTrigger(self, value = ""):
+		counters = self.host.config._get('counters', {})
+		if value == "":
+			cl = ""
+			for item in counters:
+				cl += f"{item} is at {counters[item]}\n"
+			return self.message(f"There are {len(counters)} counters.\n{cl[:-1]}")
+
+		#Make `add`, `take/sub`, `set`, `mult`, `div`
+		#Make global commands `multiply x by y` and `divide x by y`
+		
+		if value.startswith("add "):
+			value = value[4:]
+			args = value.split()
+			if not args[1].isdigit() and not isfloat(args[1]):
+				return self.message("Invalid number."
+						)
+			try:
+				counters[args[0]] += float(args[1])
+			except:
+				counters[args[0]] = float(args[1])
+				
+			self.host.config._set('counters', counters)
+			self.host.logAction('counters_'+args[0], f"ADDED - Now {counters[args[0]]}")
+			return self.message(f"{args[0]} is now {counters[args[0]]}")
+		
+		if value.startswith("sub "):
+			value = value[4:]
+			args = value.split()
+			if not args[1].isdigit() and not isfloat(args[1]):
+				return self.message("Invalid number."
+						)
+			try:
+				counters[args[0]] -= float(args[1])
+			except:
+				counters[args[0]] = 0
+				counters[args[0]] -= float(args[1])
+			self.host.config._set('counters', counters)
+			self.host.logAction('counters_'+args[0], f"SUBTRACTED - Now {counters[args[0]]}")
+			return self.message(f"{args[0]} is now {counters[args[0]]}")
+		
+		if value.startswith("div "):
+			value = value[4:]
+			args = value.split()
+			if not args[1].isdigit() and not isfloat(args[1]):
+				return self.message("Invalid number."
+						)
+			try:
+				counters[args[0]] /= float(args[1])
+			except:
+				counters[args[0]] = 0
+				counters[args[0]] /= float(args[1])
+			self.host.config._set('counters', counters)
+			self.host.logAction('counters_'+args[0], f"DIVIDED - Now {counters[args[0]]}")
+			return self.message(f"{args[0]} is now {counters[args[0]]}")
+		
+		if value.startswith("mul "):
+			value = value[4:]
+			args = value.split()
+			if not args[1].isdigit() and not isfloat(args[1]):
+				return self.message("Invalid number.")
+			
+			try:
+				counters[args[0]] *= float(args[1])
+			except:
+				counters[args[0]] = 0
+				counters[args[0]] *= float(args[1])
+			self.host.config._set('counters', counters)
+			self.host.logAction('counters_'+args[0], f"MULTIPLIED - Now {counters[args[0]]}")
+			return self.message(f"{args[0]} is now {counters[args[0]]}")
+		
+		if value.startswith("set "):
+			value = value[4:]
+			args = value.split()
+			if not args[1].isdigit() and not isfloat(args[1]):
+				return self.message("Invalid number.")
+
+			counters[args[0]] = float(args[1])
+			self.host.config._set('counters', counters)
+			self.host.logAction('counters_'+args[0], f"SET - Now {counters[args[0]]}")
+			return self.message(f"{args[0]} is now {counters[args[0]]}")
+		
+		if value.startswith("delete "):
+			value = value[7:]
+			try:
+				del counters[value]
+				self.host.config._set('counters', counters)
+				self.host.logAction('counters_'+args[0], f"ERASED")
+				return self.message(f"Value {value} deleted.")
+			except:
+				return self.message(f"{value} does not exist.")
+			
+		try:
+			return self.message(f"{value} is at {counters[value]}")
+		except:
+			return self.message(f"{value} does not exist.")
+		
 class Speak(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
@@ -38,6 +225,19 @@ class Quieten(commands.BaseCommand):
 			return self.message("Okay, speech off.")
 		
 class DiskSearchLocate(commands.BaseCommand):
+	"""
+	Disk searching tools.
+	
+	Commands:
+		disk locate <file name>
+			Searches the disk for files matching this name
+			
+		disk inspect <path> <word(s)> [optional file extension]
+			Searches the <path> for files that contain <words> in the body. If a file extension is supplied, restricts files to that type, e.g. txt files, ini files.
+			If the file path or words needs spaces in them, surround the section with quote marks, e.g.
+			disk inspect "home/user/My Documents/" "stuff here" txt
+			
+	"""
 	def __init__(self, host):
 		super().__init__(host)
 		self.addListener("disk")
@@ -133,7 +333,7 @@ class RollRNG(commands.BaseCommand):
 		if not value.isdigit():
 			return self.message("Value must be a number.")
 		random.randint(0, int(value))
-		return self.message(f"You rolled: {random.randint(0, int(value))}.")
+		return self.message(f"You rolled {random.randint(0, int(value))} out of {value}.")
 	
 class Dice(commands.BaseCommand):
 	def __init__(self, host):
@@ -170,7 +370,7 @@ class Dice(commands.BaseCommand):
 				
 			dies_string = humanfriendly.text.concatenate(dies_sl)
 
-			return self.message(f"You rolled: {dies_string}. (Total: {dies_total})")
+			return self.message(f"You rolled {dies_string}. (Total: {dies_total})")
 		except IndexError:
 			return self.message("Error in notation; example is `2d6`.")
 		except ValueError:

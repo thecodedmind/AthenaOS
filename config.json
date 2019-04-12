@@ -8,12 +8,17 @@
     "bin_ignored_paths": [
         "/home/kaiz0r/.luarocks/bin"
     ],
+    "counters": {},
     "disabled": [
         "CountTest",
         "RandomTest"
     ],
     "disabled_modules": [],
     "events": {
+        "ls": {
+            "data": "ls",
+            "type": "terminal"
+        },
         "op": {
             "data": "This\\nis\\nan\\ntest",
             "type": "output"

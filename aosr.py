@@ -37,7 +37,19 @@ class CommandInfo:
 		self.colours = Color
 		self.reset_f = Formatting.Reset
 		self.core_modules = ['ext.commands', 'ext.kext']
-	
+		self.logs = None
+		
+	def logAction(self, group, message):
+		ts = arrow.now().format('YYYY-MM-DD HH:mm:ss')
+		
+		data = {
+			'message': message,
+			'timestamp': ts
+		}
+		g = self.logs._get(group, [])
+		g.append(data)
+		self.logs._set(group, g)
+		
 	def terminal(self, command):
 		res = subprocess.run(command.split(" "), stdout=subprocess.PIPE)
 		return str(res.stdout,"latin-1")	
@@ -65,6 +77,9 @@ class CommandInfo:
 				eval(data['data'])
 			elif data['type'] == "message" or data['type'] == 'output':
 				return {data['type']: data['data']}
+			elif data['type'] == "terminal":
+				t = self.terminal(data['data'])
+				return {'output': t}
 		except KeyError:
 			return {'message': "Invalid event data."}
 		
@@ -113,6 +128,7 @@ def now():
 	return f"{h}:{m}:{s} "	
 
 def say(text):
+	gcinfo.logAction('say', text)
 	if not gcinfo.config._get('tts'):
 		printf(text, tag="say-notts")
 		return
@@ -167,6 +183,7 @@ def handleReturnData(return_data):
 		say(return_data['message'])
 
 	if return_data.get('output'):
+		gcinfo.logAction('output', return_data['output'])
 		printf(return_data['output'], tag='output')
 		
 	if return_data.get('code') == "hold":
@@ -177,6 +194,7 @@ def handleReturnData(return_data):
 			handleReturnData(response)
 			
 	if return_data.get('code') == "quit":
+		gcinfo.logAction('system', "Quit by command.")
 		quit()
 	
 def run_cli():
@@ -187,6 +205,8 @@ def run_cli():
 		gcinfo.config._set('username', os.environ.get('USER'))
 		user = os.environ.get('USER')
 		
+	gcinfo.logAction('system', "System startup.")	
+	
 	say(f"What do you need, {user}?")
 
 	while True:
@@ -199,6 +219,7 @@ def initCreateCore():
 	printf("Creating core...", tag='info')
 	gcinfo = CommandInfo()
 	gcinfo.config = memory.Memory(path=gcinfo.scriptdir, logging=True)
+	gcinfo.logs = memory.Memory(path=gcinfo.scriptdir+"logs.json", logging=True)
 	return gcinfo
 
 def initCacheProcesses(gcinfo):
@@ -269,9 +290,6 @@ def initCacheCommands(gcinfo):
 		
 	gcinfo.commands = commandsf	
 	
-class ThreadInterrupt(Exception):
-	pass
-
 def run():
 	global gcinfo
 	with AutomaticSpinner(label="Loading Athena..."):
@@ -282,8 +300,7 @@ def run():
 		run_cli()
 	except KeyboardInterrupt:
 		print("Closing.")
-	except ThreadInterrupt:
-		print("Interrupted.")
 	except Exception as e:
 		print(e)
+		run_cli()
 run()

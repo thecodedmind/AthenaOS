@@ -1,0 +1,77 @@
+{
+    "counters_wickeds": [],
+    "output": [
+        {
+            "message": " \u001b[1msay\u001b[0m [8]\n \u001b[1msystem\u001b[0m [7]",
+            "timestamp": "2019-04-12 14:31:03"
+        },
+        {
+            "message": "-- Log for \u001b[1msystem\u001b[0m (7 items) --\n\u001b[1m2019-04-12 14:08:01\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:08:37\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:09:32\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:11:24\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:11:47\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:14:28\u001b[0m: System startup.\n\u001b[1m2019-04-12 14:29:13\u001b[0m: System startup.",
+            "timestamp": "2019-04-12 14:31:06"
+        }
+    ],
+    "say": [
+        {
+            "message": "Purged log say",
+            "timestamp": "2019-04-12 14:15:14"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-12 14:29:13"
+        },
+        {
+            "message": "No logs for purge counters_wickeds",
+            "timestamp": "2019-04-12 14:30:00"
+        },
+        {
+            "message": "wickeds does not exist.",
+            "timestamp": "2019-04-12 14:30:16"
+        },
+        {
+            "message": "There are 0 counters.\n",
+            "timestamp": "2019-04-12 14:30:19"
+        },
+        {
+            "message": "No logs for s counters_wickeds",
+            "timestamp": "2019-04-12 14:30:31"
+        },
+        {
+            "message": "Purged log counters_wickeds",
+            "timestamp": "2019-04-12 14:30:39"
+        },
+        {
+            "message": "Purged log output",
+            "timestamp": "2019-04-12 14:31:01"
+        }
+    ],
+    "system": [
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:08:01"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:08:37"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:09:32"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:11:24"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:11:47"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:14:28"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-12 14:29:13"
+        }
+    ]
+}
