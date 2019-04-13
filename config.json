@@ -8,7 +8,9 @@
     "bin_ignored_paths": [
         "/home/kaiz0r/.luarocks/bin"
     ],
-    "counters": {},
+    "counters": {
+        "borks": 1.0
+    },
     "disabled": [
         "CountTest",
         "RandomTest"

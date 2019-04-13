@@ -39,16 +39,16 @@ class CommandInfo:
 		self.core_modules = ['ext.commands', 'ext.kext']
 		self.logs = None
 		
-	def logAction(self, group, message):
+	def logAction(self, group:str, message:str):
 		ts = arrow.now().format('YYYY-MM-DD HH:mm:ss')
 		
 		data = {
-			'message': message,
+			'message': str(message),
 			'timestamp': ts
 		}
-		g = self.logs._get(group, [])
+		g = self.logs._get(str(group), [])
 		g.append(data)
-		self.logs._set(group, g)
+		self.logs._set(str(group), g)
 		
 	def terminal(self, command):
 		res = subprocess.run(command.split(" "), stdout=subprocess.PIPE)
