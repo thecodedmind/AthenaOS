@@ -159,25 +159,34 @@ def checkAliases(message):
 	return message
 
 def process_commands(phrase):
+	found_commands = []
 	for item in gcinfo.commands:
 		if issubclass(item[1], BaseCommand):
 			inst = gcinfo.command_cache[item[0]]
 			if inst.check(phrase):
-				if inst.inter:
-					#print(item)
-					value = parseResult(inst, phrase)
-					value = checkAliases(value)
-					#print(f"Got value {value}")
-					return_data = inst.onTrigger(value)
-				else:
-					try:
-						return_data = inst.onTrigger()
-					except TypeError:
-						return_data = inst.onTrigger("")
-				#print(return_data)
-				if return_data:
-					handleReturnData(return_data)
-
+				found_commands.append(inst)
+				
+	if len(found_commands) == 0:
+		say("No command was found.")
+	elif len(found_commands) == 1:
+		inst = found_commands[0]
+		if inst.inter:
+			#print(item)
+			value = parseResult(inst, phrase)
+			value = checkAliases(value)
+			#print(f"Got value {value}")
+			return_data = inst.onTrigger(value)
+		else:
+			try:
+				return_data = inst.onTrigger()
+			except TypeError:
+				return_data = inst.onTrigger("")
+		#print(return_data)
+		if return_data:
+			handleReturnData(return_data)
+	else:
+		say("Multiple matches found")
+		
 def handleReturnData(return_data):
 	if return_data.get('message'):
 		say(return_data['message'])

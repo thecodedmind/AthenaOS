@@ -7,6 +7,18 @@
         {
             "message": "-- Log for \u001b[1msay\u001b[0m (2 items) --\n\u001b[1m2019-04-13 21:04:31\u001b[0m: What do you need, Kyle?\n\u001b[1m2019-04-13 21:04:36\u001b[0m: outcast",
             "timestamp": "2019-04-13 21:04:43"
+        },
+        {
+            "message": " [\u001b[32mON\u001b[0m] \u001b[1mext.kext\u001b[0m\n [\u001b[32mON\u001b[0m] ext.appimage\n [\u001b[32mON\u001b[0m] ext.pkmn\n [\u001b[32mON\u001b[0m] \u001b[1mext.commands\u001b[0m\n [\u001b[32mON\u001b[0m] ext.bin_launcher\n [\u001b[32mON\u001b[0m] ext.ddg",
+            "timestamp": "2019-04-14 18:54:44"
+        },
+        {
+            "message": "bin_launcher : https://github.com/codedthoughts/aosr-modules/raw/master/bin_launcher.py\nA simple binary launcher manager.\nappimage : https://github.com/codedthoughts/aosr-modules/raw/master/appimage.py\nA simple appimage launcher manager.\npkmn : https://github.com/codedthoughts/aosr-modules/raw/master/pkmn.py\nInterfacing with the pokeapi client.\nddg : https://github.com/codedthoughts/aosr-modules/raw/master/ddg.py\nSearching duckduckgo.",
+            "timestamp": "2019-04-14 18:54:53"
+        },
+        {
+            "message": "alias_character = $ (<class 'str'>)\naliases = {\n    \"dx\": \"/home/kaiz0r/.wine/drive_c/Deus Ex GOTY\",\n    \"me\": \"Kaiser\"\n}\nappimage_path = /home/kaiz0r/Applications/ (<class 'str'>)\nbin_ignored_paths = ['/home/kaiz0r/.luarocks/bin'] (<class 'list'>)\ncounters = {\n    \"borks\": 1.0\n}\ndisabled = ['CountTest', 'RandomTest'] (<class 'list'>)\ndisabled_modules = [] (<class 'list'>)\nevents = {\n    \"ls\": {\n        \"data\": \"ls\",\n        \"type\": \"terminal\"\n    },\n    \"op\": {\n        \"data\": \"This\\\\nis\\\\nan\\\\ntest\",\n        \"type\": \"output\"\n    },\n    \"testev\": {\n        \"data\": \"print(\\\"This is an eval test\\\")\",\n        \"type\": \"eval\"\n    },\n    \"testmes\": {\n        \"data\": \"This is a message test.\",\n        \"type\": \"message\"\n    },\n    \"testy\": {\n        \"data\": \"hm\",\n        \"type\": \"message\"\n    }\n}\nforce_global_update = False (<class 'bool'>)\nhas_updates = True (<class 'bool'>)\nprocesses = {\n    \"AOSProcess\": false,\n    \"Reader\": false,\n    \"TestProc\": false\n}\nskip_prompts = False (<class 'bool'>)\ntts = False (<class 'bool'>)\nupdate_check_on_startup = False (<class 'bool'>)\nusername = Kyle (<class 'str'>)",
+            "timestamp": "2019-04-15 10:11:23"
         }
     ],
     "say": [
@@ -21,6 +33,210 @@
         {
             "message": "Goodbye.",
             "timestamp": "2019-04-13 21:04:54"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-14 18:54:36"
+        },
+        {
+            "message": "Executing bash commands.",
+            "timestamp": "2019-04-14 21:41:33"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:11:21"
+        },
+        {
+            "message": "Okay, key weather_ set to ken   4bef92b904d0743356e23f31986ca793",
+            "timestamp": "2019-04-15 10:11:38"
+        },
+        {
+            "message": "Okay, key weather_ set to ken   4bef92b904d0743356e23f31986ca793",
+            "timestamp": "2019-04-15 10:12:44"
+        },
+        {
+            "message": "Goodbye.",
+            "timestamp": "2019-04-15 10:12:48"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:12:54"
+        },
+        {
+            "message": "Okay, key weather_token set to 4bef92b904d0743356e23f31986ca793",
+            "timestamp": "2019-04-15 10:12:56"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:49:39"
+        },
+        {
+            "message": "No location found. 'set location to x'",
+            "timestamp": "2019-04-15 10:49:43"
+        },
+        {
+            "message": "Okay, key location set to Leeds, UK",
+            "timestamp": "2019-04-15 10:49:48"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:49:54"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:50:13"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:50:21"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:51:29"
+        },
+        {
+            "message": "**Leeds :: Europe/London**\nLocal Time is 10:51 on 15/4/2019\nCurrently 48\u00b0F/9\u00b0C (66% humidity)\nCurrent weather is Breezy and Mostly Cloudy\n",
+            "timestamp": "2019-04-15 10:51:39"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 10:53:07"
+        },
+        {
+            "message": "Speech enabled.",
+            "timestamp": "2019-04-15 10:53:08"
+        },
+        {
+            "message": "Weather report for Leeds, Europe/London\nThe local time is 10:53 on 15/4/2019\nIt is currently 48\u00b0F/9\u00b0C (66% humidity)\nThe current weather is Breezy and Mostly Cloudy",
+            "timestamp": "2019-04-15 10:53:17"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:00:43"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:01:26"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:02:05"
+        },
+        {
+            "message": "Weather report for United States of America, America/Los_Angeles.\nThe local time is 3:02 on 15/4/2019.\nIt is currently 69\u00b0F/20\u00b0C. (25% humidity)\nThe current weather is Clear.",
+            "timestamp": "2019-04-15 11:02:41"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:25:46"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:25:59"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:26:00"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:26:44"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:26:52"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:26:53"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:28:25"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:28:33"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:28:45"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:28:47"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:31:13"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:31:18"
+        },
+        {
+            "message": "Weather report for Leeds, Europe/London.\nThe local time is 11:31 on 15/4/2019.\nIt is currently 49\u00b0F/9\u00b0C. (62% humidity)\nThe current weather is Breezy and Mostly Cloudy.",
+            "timestamp": "2019-04-15 11:31:34"
+        },
+        {
+            "message": "Okay, speech off.",
+            "timestamp": "2019-04-15 11:31:45"
+        },
+        {
+            "message": "No command was found.",
+            "timestamp": "2019-04-15 11:32:21"
+        },
+        {
+            "message": "No command was found.",
+            "timestamp": "2019-04-15 11:33:04"
+        },
+        {
+            "message": "No command was found.",
+            "timestamp": "2019-04-15 11:33:07"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:33:12"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:33:46"
+        },
+        {
+            "message": "No command was found.",
+            "timestamp": "2019-04-15 11:33:50"
+        },
+        {
+            "message": "No command was found.",
+            "timestamp": "2019-04-15 11:33:54"
+        },
+        {
+            "message": "Weather report for Leeds, Europe/London.\nThe local time is 11:34 on 15/4/2019.\nIt is currently 50\u00b0F/10\u00b0C. (62% humidity)\nThe current weather is Breezy and Mostly Cloudy.",
+            "timestamp": "2019-04-15 11:34:03"
+        },
+        {
+            "message": "Weather report for United States of America, America/New_York.\nThe local time is 6:34 on 15/4/2019.\nIt is currently 48\u00b0F/9\u00b0C. (87% humidity)\nThe current weather is Mostly Cloudy.",
+            "timestamp": "2019-04-15 11:34:29"
+        },
+        {
+            "message": "No alerts for Leeds.",
+            "timestamp": "2019-04-15 11:34:40"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:34:59"
+        },
+        {
+            "message": "What do you need, Kyle?",
+            "timestamp": "2019-04-15 11:35:36"
+        },
+        {
+            "message": "No alerts for United States of America.",
+            "timestamp": "2019-04-15 11:35:44"
+        },
+        {
+            "message": "No alerts for India.",
+            "timestamp": "2019-04-15 11:35:54"
         }
     ],
     "system": [
@@ -31,6 +247,102 @@
         {
             "message": "Quit by command.",
             "timestamp": "2019-04-13 21:04:54"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-14 18:54:36"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:11:21"
+        },
+        {
+            "message": "Quit by command.",
+            "timestamp": "2019-04-15 10:12:48"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:12:54"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:49:39"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:49:54"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:50:13"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:50:21"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:51:29"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 10:53:07"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:00:43"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:01:26"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:02:05"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:25:46"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:25:59"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:26:44"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:26:53"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:28:25"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:28:47"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:31:13"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:31:18"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:33:46"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:34:59"
+        },
+        {
+            "message": "System startup.",
+            "timestamp": "2019-04-15 11:35:36"
         }
     ]
 }

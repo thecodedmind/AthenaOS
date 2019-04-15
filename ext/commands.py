@@ -546,10 +546,10 @@ class CfgSet(BaseCommand):
 		#print(value)
 		#print(self.host.scriptdir)
 		
-		if not "to" in value:
+		if not " to " in value:
 			return {'message': f"Bad formatting, format is `set key to value`"}
 		
-		key = value.split("to")[0]
+		key = value.split(" to ")[0]
 		key = key.strip()
 		while " " in key:
 			key = key.replace(" ", "_")
@@ -558,7 +558,7 @@ class CfgSet(BaseCommand):
 		if key in locked_vars:
 			return self.message(f"Can't edit {key}, that variable can only be modified through the relevant command.")
 		
-		val = value.split("to")[1:]
+		val = value.split(" to ")[1:]
 		val = ' '.join(val)
 		val = val.strip()
 		_val = val

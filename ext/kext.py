@@ -14,6 +14,19 @@ def isfloat(value):
 		return True
 	except ValueError:
 		return False
+
+class Calculate(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("calculate")
+		self.inter = True
+		
+	def onTrigger(self, value=""):
+		try:
+			value = eval(cstr, {})
+			return self.message(str(value))
+		except Exception as e:
+			return self.message("Syntax error.")
 		
 class CountersAdd(commands.BaseCommand):
 	def __init__(self, host):

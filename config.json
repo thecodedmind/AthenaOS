@@ -40,6 +40,7 @@
     },
     "force_global_update": false,
     "has_updates": true,
+    "location": "Leeds, UK",
     "processes": {
         "AOSProcess": false,
         "Reader": false,
@@ -48,5 +49,7 @@
     "skip_prompts": false,
     "tts": false,
     "update_check_on_startup": false,
-    "username": "Kyle"
+    "username": "Kyle",
+    "weather_": "ken   4bef92b904d0743356e23f31986ca793",
+    "weather_token": "4bef92b904d0743356e23f31986ca793"
 }
