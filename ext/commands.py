@@ -297,7 +297,7 @@ class Module(BaseCommand):
 			url = "https://raw.githubusercontent.com/codedthoughts/aosr-modules/master/README.md"
 			self.readme_cache = requests.get(url).text
 		else:
-			#print("Returning readme from cache")
+			pass
 		data = self.readme_cache.split("\n")
 		return self.findBlock(data, f"## {module_name}")	
 	
@@ -368,12 +368,12 @@ class Module(BaseCommand):
 			for item in remote_manifest:
 				if item['name'].endswith(".py"):
 					if value.lower() in item['name'].lower():
-						s += f"{item['name']} : {item['download_url']}\n"
+						s += f"{item['name']} : {self.host.colours.F_Blue}{item['download_url']}{self.host.reset_f}\n"
 						r = self.getReadme(item['name'].split(".")[0])
 						if r:
 							r = '\n'.join(r)
-							s += f"- {self.host.colours.F_Blue}{r}{self.host.reset_f}"
-			return self.output(s[:-1])
+							s += f"- {self.host.colours.F_Yellow}{r}{self.host.reset_f}"
+			return self.output(s)
 			
 		if value == "find":			
 			req = requests.get(self.host.modules_manifest).text
@@ -381,12 +381,12 @@ class Module(BaseCommand):
 			s = ""
 			for item in remote_manifest:
 				if item['name'].endswith(".py"):
-					s += f"{item['name']} : {item['download_url']}\n"
+					s += f"{item['name']} : {self.host.colours.F_Blue}{item['download_url']}{self.host.reset_f}\n"
 					r = self.getReadme(item['name'].split(".")[0])
 					if r:
 						r = '\n'.join(r)
-						s += f"- {self.host.colours.F_Blue}{r}{self.host.reset_f}"				
-			return self.output(s[:-1])
+						s += f"- {self.host.colours.F_Yellow}{r}{self.host.reset_f}"				
+			return self.output(s)
 		
 		if value.startswith("install "):
 			value = value[8:]
