@@ -62,10 +62,10 @@ class BaseCommand:
 		for item in self.phrases:
 			if not self.inter:
 				if fuzz.ratio(check_message.lower(), item['message'].lower()) >= item['check']:
-					return True
+					return {'ratio': fuzz.ratio(check_message.lower(), item['message'].lower())}
 			else:
 				if check_message.lower().startswith(item['message'].lower()):
-					return True
+					return {'ratio': fuzz.ratio(check_message.lower(), item['message'].lower())}
 	
 	def onTrigger(self, value = ""):
 		"""Called when the command is executed."""
@@ -364,7 +364,7 @@ class Module(BaseCommand):
 			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
 			
-			s = ""
+			s = "\n"
 			for item in remote_manifest:
 				if item['name'].endswith(".py"):
 					if value.lower() in item['name'].lower():
@@ -378,7 +378,7 @@ class Module(BaseCommand):
 		if value == "find":			
 			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
-			s = ""
+			s = "\n"
 			for item in remote_manifest:
 				if item['name'].endswith(".py"):
 					s += f"{item['name']} : {self.host.colours.F_Blue}{item['download_url']}{self.host.reset_f}\n"

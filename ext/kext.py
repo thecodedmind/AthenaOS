@@ -15,6 +15,25 @@ def isfloat(value):
 	except ValueError:
 		return False
 
+class WikiOnThisDay(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("on this day", 80)
+
+	def onTrigger(self, value=""):
+		url = "https://en.wikipedia.org/w/api.php?action=featuredfeed&feed=onthisday&feedformat=atom"
+		return self.message("THIS")
+
+class WikiFeaturedArticles(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("on that day", 80)
+		
+	def onTrigger(self, value=""):
+		url = "https://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom"
+		return self.message("THAT")
+
+		
 class Calculate(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
@@ -23,7 +42,7 @@ class Calculate(commands.BaseCommand):
 		
 	def onTrigger(self, value=""):
 		try:
-			value = eval(cstr, {})
+			value = eval(value, {})
 			return self.message(str(value))
 		except Exception as e:
 			return self.message("Syntax error.")

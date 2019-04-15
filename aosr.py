@@ -158,34 +158,51 @@ def checkAliases(message):
 			
 	return message
 
+def execute(inst, phrase):
+	if inst.inter:
+		#print(item)
+		value = parseResult(inst, phrase)
+		value = checkAliases(value)
+		#print(f"Got value {value}")
+		return_data = inst.onTrigger(value)
+	else:
+		try:
+			return_data = inst.onTrigger()
+		except TypeError:
+			return_data = inst.onTrigger("")
+	#print(return_data)
+	if return_data:
+		handleReturnData(return_data)
+		
 def process_commands(phrase):
 	found_commands = []
 	for item in gcinfo.commands:
 		if issubclass(item[1], BaseCommand):
 			inst = gcinfo.command_cache[item[0]]
-			if inst.check(phrase):
-				found_commands.append(inst)
-				
+			checked = inst.check(phrase)
+			if checked:
+				try:
+					found_commands.append({'instance':inst, 'name':item[0],'match':checked['ratio']})
+				except Exception as e:
+					print(f"{item[0]} errored for some reason. {e}")
+					
 	if len(found_commands) == 0:
 		say("No command was found.")
 	elif len(found_commands) == 1:
-		inst = found_commands[0]
-		if inst.inter:
-			#print(item)
-			value = parseResult(inst, phrase)
-			value = checkAliases(value)
-			#print(f"Got value {value}")
-			return_data = inst.onTrigger(value)
-		else:
-			try:
-				return_data = inst.onTrigger()
-			except TypeError:
-				return_data = inst.onTrigger("")
-		#print(return_data)
-		if return_data:
-			handleReturnData(return_data)
+		execute(found_commands[0]['instance'], phrase)
+		
 	else:
-		say("Multiple matches found")
+		for item in found_commands:
+			print(f"Match: {item['name']} ({item['match']}%)")
+		
+		highest = {'name': "", 'ratio': 0, 'instance': None}
+		for item in found_commands:
+			if item['match'] > highest['ratio']:
+				highest['name'] = item['name']
+				highest['ratio'] = item['match']
+				highest['instance'] = item['instance']
+				
+		execute(highest['instance'], phrase)
 		
 def handleReturnData(return_data):
 	if return_data.get('message'):
