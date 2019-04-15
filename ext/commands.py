@@ -271,7 +271,36 @@ class Module(BaseCommand):
 		super().__init__(host)
 		self.phrases = [self.message("module"), self.message("mods"), self.message("modules")]
 		self.inter = True
+		self.readme_cache = None
 		
+	def findBlock(self, data, block_name):
+		start = -1
+		end = -1
+		
+		for item in data:
+			if item.startswith(f"{block_name}") and start == -1:
+				#print(f"Found {item}")
+				start = data.index(item)
+				end = start
+			if start != -1:
+				#print(f"Checking if {item} is end")
+				end += 1
+				if item == "\n" or item == "" or item == " ":
+					#print(f"Ended")
+					
+					#print(f"Ending: {start} - {end}")
+					return data[start:end]
+					
+	def getReadme(self, module_name):
+		if not self.readme_cache:
+			print("Downloading readme")
+			url = "https://raw.githubusercontent.com/codedthoughts/aosr-modules/master/README.md"
+			self.readme_cache = requests.get(url).text
+		else:
+			#print("Returning readme from cache")
+		data = self.readme_cache.split("\n")
+		return self.findBlock(data, f"## {module_name}")	
+	
 	def onTrigger(self, value = ""):
 		if value == "":
 			value = "list"
@@ -337,20 +366,26 @@ class Module(BaseCommand):
 			
 			s = ""
 			for item in remote_manifest:
-				if value.lower() in item.lower():
-					s += f"{item} : {remote_manifest[item]['url']}\n{remote_manifest[item]['desc']}\n"
-					
+				if item['name'].endswith(".py"):
+					if value.lower() in item['name'].lower():
+						s += f"{item['name']} : {item['download_url']}\n"
+						r = self.getReadme(item['name'].split(".")[0])
+						if r:
+							r = '\n'.join(r)
+							s += f"- {self.host.colours.F_Blue}{r}{self.host.reset_f}"
 			return self.output(s[:-1])
 			
 		if value == "find":			
 			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
-			#print(remote_manifest)
 			s = ""
 			for item in remote_manifest:
-				#print(item)
-				s += f"{item} : {remote_manifest[item]['url']}\n{remote_manifest[item]['desc']}\n"
-					
+				if item['name'].endswith(".py"):
+					s += f"{item['name']} : {item['download_url']}\n"
+					r = self.getReadme(item['name'].split(".")[0])
+					if r:
+						r = '\n'.join(r)
+						s += f"- {self.host.colours.F_Blue}{r}{self.host.reset_f}"				
 			return self.output(s[:-1])
 		
 		if value.startswith("install "):
@@ -359,10 +394,14 @@ class Module(BaseCommand):
 			req = requests.get(self.host.modules_manifest).text
 			remote_manifest = json.loads(req)
 			
+			target = None
 			for item in remote_manifest:
-				if value.lower() in item.lower():
-					target = remote_manifest[item]['url']
-					
+				if value.lower() in item['name'].lower():
+					target = item['download_url']
+			
+			if not target:
+				return self.message("Module not found.")
+			
 			if self.host.promptConfirm(f"Will try to download {value} from {target}"):
 				self.host.getFile(target, 'ext/', options = '-N -q')
 				return self.message(f"Installed {value}. Commands will be enabled after running 'refresh commands' or restarting the client.")
