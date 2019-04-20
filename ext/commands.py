@@ -31,7 +31,8 @@ class BaseCommand:
 		self.alias = type(self).__name__
 		self.hidden = False
 		self.disabled = False
-	
+		self.cfg = self.host.config
+		
 	def addListener(self, text, check = 100):
 		#Helper function for adding listeners
 		data = {'message': text, 'check': check}
@@ -57,12 +58,14 @@ class BaseCommand:
 		
 	def check(self, check_message):
 		if type(self).__name__ in self.host.config._get('disabled'):
+			print("Disabled command.")
 			return False
 		
 		for item in self.phrases:
 			if not self.inter:
 				if fuzz.ratio(check_message.lower(), item['message'].lower()) >= item['check']:
-					return {'ratio': fuzz.ratio(check_message.lower(), item['message'].lower())}
+					#print(f"{type(self).__name__} checked")
+					return	{'ratio': fuzz.ratio(check_message.lower(), item['message'].lower())}
 			else:
 				if check_message.lower().startswith(item['message'].lower()):
 					return {'ratio': fuzz.ratio(check_message.lower(), item['message'].lower())}
@@ -86,7 +89,7 @@ class BaseCommand:
 	def onClose(self):
 		"""Run on shutdown"""
 		pass
-	
+		
 class WaitTemplate(BaseCommand):
 	"""
 	Template for handling Wait commands

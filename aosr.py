@@ -160,27 +160,30 @@ def checkAliases(message):
 
 def execute(inst, phrase):
 	if inst.inter:
-		#print(item)
 		value = parseResult(inst, phrase)
 		value = checkAliases(value)
-		#print(f"Got value {value}")
 		return_data = inst.onTrigger(value)
 	else:
 		try:
 			return_data = inst.onTrigger()
 		except TypeError:
 			return_data = inst.onTrigger("")
-	#print(return_data)
+
 	if return_data:
 		handleReturnData(return_data)
 		
 def process_commands(phrase):
+	if phrase == "":
+		return
+	
 	found_commands = []
 	for item in gcinfo.commands:
 		if issubclass(item[1], BaseCommand):
 			inst = gcinfo.command_cache[item[0]]
 			checked = inst.check(phrase)
+			
 			if checked:
+				#print(f"Validated {checked}")
 				try:
 					found_commands.append({'instance':inst, 'name':item[0],'match':checked['ratio']})
 				except Exception as e:
@@ -225,7 +228,7 @@ def handleReturnData(return_data):
 	
 def run_cli():
 	printf("Loading Athena", tag="info")
-	#user = touchConfig('core', 'username', os.environ.get('USER'))
+
 	user = gcinfo.config._get('username')
 	if user == "":
 		gcinfo.config._set('username', os.environ.get('USER'))
@@ -238,8 +241,6 @@ def run_cli():
 	while True:
 		phrase = input("(> ")
 		resp = process_commands(phrase)
-		#printf(f"Captured: {phrase}", tag="info")
-		
 
 def initCreateCore():
 	printf("Creating core...", tag='info')
@@ -291,7 +292,6 @@ def initCacheCommands(gcinfo):
 				printf(f"Loading command module: {modname}", tag='info')
 				importlib.import_module("ext."+modname)
 				clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
-				#print(clsmembers)
 				commandsf += clsmembers
 			else:
 				print(f"Not loading {modname}")
@@ -306,7 +306,6 @@ def initCacheCommands(gcinfo):
 			invalid_classes.append(item)
 	
 	for item in invalid_classes:
-		#printf(f"Invalidating {item}")
 		commandsf.remove(item)	
 	
 	dis = gcinfo.config._get('disabled')
