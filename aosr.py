@@ -38,7 +38,10 @@ class CommandInfo:
 		self.reset_f = Formatting.Reset
 		self.core_modules = ['ext.commands', 'ext.kext']
 		self.logs = None
-		
+	
+	def getCommand(self, command_name):
+		return self.command_cache[command_name]
+	
 	def logAction(self, group:str, message:str):
 		ts = arrow.now().format('YYYY-MM-DD HH:mm:ss')
 		
@@ -112,6 +115,9 @@ def printf(text, *, tag="", ts=True):
 		print(f"{time} [ {Color.F_Red}ERROR{Base.END} ] {Formatting.Bold}{text}{Formatting.Reset_Bold}")
 	elif tag == "info":
 		print(f"{time} [ {Color.F_LightGray}INFO{Base.END} ] {text}")
+	elif tag == "debug":
+		if gcinfo.config._get('debug', False):
+			print(f"{time} [ {Color.F_Yellow}INFO{Base.END} ] {text}")
 	else:
 		print(f"{time} | {text}")
 
@@ -190,7 +196,15 @@ def process_commands(phrase):
 					print(f"{item[0]} errored for some reason. {e}")
 					
 	if len(found_commands) == 0:
-		say("No command was found.")
+		if not gcinfo.config._get('fallback', ""):
+			say("No command was found.")
+		else:
+			printf("Running fallback.", tag='debug')
+			for item in gcinfo.commands:
+				if item[0] == gcinfo.config._get('fallback', ""):
+					printf(f"Found {item[0]}, passing '{gcinfo.getCommand(item[0]).phrases[0]['message']} {phrase}'", tag='debug')
+					execute(gcinfo.command_cache[item[0]], f"{gcinfo.getCommand(item[0]).phrases[0]['message']} {phrase}")
+		
 	elif len(found_commands) == 1:
 		execute(found_commands[0]['instance'], phrase)
 		

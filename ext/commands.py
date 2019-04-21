@@ -58,7 +58,7 @@ class BaseCommand:
 		
 	def check(self, check_message):
 		if type(self).__name__ in self.host.config._get('disabled'):
-			print("Disabled command.")
+			#print("Disabled command.")
 			return False
 		
 		for item in self.phrases:
@@ -123,7 +123,23 @@ class Quit(BaseCommand):
 			return {'message': 'Goodbye.', 'code': 'quit'}
 		else:
 			return self.message("Okay, nevermind then.")
+	
+class FallbackManager(BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'fallback'}]
+		self.inter = True
 		
+	def onTrigger(self, value = ""):
+		c = ""
+		for item in self.host.commands:
+			not_allowed = ['basecommand', 'fallbackmanager', 'quit', 'waittemplate']
+			if not self.host.command_cache[item[0]].hidden and item[0].lower() not in not_allowed and item[0] not in self.host.config._get('disabled'):
+				if value.lower() in item[0].lower():
+					c = self.host.command_cache[item[0]]
+					self.cfg._set('fallback', item[0])
+					return self.message(f"{item[0]} set as fallback.")
+				
 class CommandsList(BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
