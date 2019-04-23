@@ -25,6 +25,8 @@ class Wolfram(commands.BaseCommand):
 		r = requests.get(f).text
 		try:
 			msg = json.loads(r)
+			if msg.get('error'):
+				return self.message(msg['error'])
 			return self.message(msg['result'])
 		except Exception as e:
 			return self.output(f"{type(e)}\n{e}\n{r}")

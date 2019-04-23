@@ -13,7 +13,9 @@ class AppImageManager(commands.BaseCommand):
 		self.apps_path = self.host.config._get('appimage_path')
 		print("Building appimages cache...")
 		if not self.apps_path:
-			printf("No appimage path is defined, use 'set appimage path to' followed by a path to the appimage directory you want to use.", tag='info')
+			self.host.printf("No appimage path is defined, use 'set appimage path to' followed by a path to the appimage directory you want to use.", tag='info')
+			self.disabled = True
+			return
 		
 		for file in os.listdir(self.apps_path):
 			filename = os.fsdecode(file)
@@ -24,6 +26,9 @@ class AppImageManager(commands.BaseCommand):
 		self.apps = []
 		
 	def onTrigger(self, value=""):
+		if self.disabled:
+			return self.message("No appimage path is defined, use 'set appimage path to' followed by a path to the appimage directory you want to use.")
+		
 		if value == "":
 			value = "list"
 			

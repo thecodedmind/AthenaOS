@@ -8,6 +8,7 @@ import humanfriendly.prompts
 from Color import *
 import json
 import requests
+import psutil
 
 class BaseCommand:
 	"""
@@ -155,6 +156,79 @@ class CommandsList(BaseCommand):
 					c += f" [\x1b[32mON\x1b[0m] {self.host.command_cache[item[0]].__class__.__module__}.{item[0]}\n"
 		
 		return self.output(c[:-1])
+
+class KillProc(BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'kill'}]
+		self.inter = True
+		
+	def onTrigger(self, value):
+		for p in psutil.process_iter():
+			if value.lower() in p.name().lower() or value in p.cmdline():# or value in p.exe():
+				if self.host.promptConfirm(f"Really kill process {' '.join(p.cmdline())}?"):
+					p.kill()
+					return self.message(f"Killed {p.name()}.")
+				else:
+					return self.message("Cancelled.")
+		
+		return self.message("Process not found.")
+
+class LimitCPUProc(BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.phrases = [{'message': 'limit process'}]
+		self.inter = True
+		
+	def onTrigger(self, value):
+		process_name = value.split()[0]
+		process_limit = value.split()[1]
+		for p in psutil.process_iter():
+			if process_name.lower() in p.name().lower() or process_name in p.cmdline():
+				if self.host.promptConfirm(f"Really limit process {p.name()} to {process_limit}% usage?"):
+					os.system(f"{self.host.scriptdir}bin/cpulimit --pid {p.pid} --limit {process_limit}&")
+					return self.message("Limit applied.")
+				else:
+					return self.message("Cancelled.")
+		
+		return self.message("Process not found.")
+
+class DeLimitCPUProc(BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener('delimit')
+
+	def onTrigger(self, value):
+		b = self.host.formatting.Bold
+		blue = self.host.colours.F_Blue
+		r = self.host.reset_f
+		limiters = []
+		for p in psutil.process_iter():
+			if p.name() == "cpulimit":
+				limiters.append(p)
+		
+		if len(limiters) == 0:
+			return self.message("No limiters running.")
+		else:
+			prompt = "\n"
+			for i in limiters:
+				targetted = i.cmdline().index("--pid")
+				#print(targetted)
+				targetted = i.cmdline()[targetted+1]
+				#print(targetted)
+				prompt += f" {b}{limiters.index(i)}{r}: {blue}{' '.join(i.cmdline())}{r} (Limiting {psutil.Process(int(targetted)).name()})\n"
+				#print("Done")
+			
+			self.host.printf(f"Enter a number to continue:\n{prompt}")
+
+			pro = input("Enter: ")
+			
+			if pro == "":
+				return self.message("Cancelled.")
+			if pro.isdigit():
+				limiters[int(pro)].kill()
+			else:
+				return self.message("Not a number.")
 			
 class Help(BaseCommand):
 	"""

@@ -16,11 +16,11 @@ from processes.processes import AOSProcess
 import humanfriendly
 from humanfriendly import AutomaticSpinner
 import readline
-
+gcinfo = None
 class CommandInfo:
 	def __init__(self):
 		self.scriptdir = os.path.dirname(os.path.realpath(__file__))+"/"
-		printf(f"Script dir: {self.scriptdir}", tag='info')
+		#printf(f"Script dir: {self.scriptdir}", tag='debug')
 		self.config = None
 		self.commands = []
 		self.command_cache = {}
@@ -43,6 +43,8 @@ class CommandInfo:
 		return self.command_cache[command_name]
 	
 	def logAction(self, group:str, message:str):
+		if group == "":
+			group = "untagged"
 		ts = arrow.now().format('YYYY-MM-DD HH:mm:ss')
 		
 		data = {
@@ -50,6 +52,9 @@ class CommandInfo:
 			'timestamp': ts
 		}
 		g = self.logs._get(str(group), [])
+		#print(g)
+		#print(group)
+		#print(type(g))
 		g.append(data)
 		self.logs._set(str(group), g)
 		
@@ -103,8 +108,13 @@ class CommandInfo:
 def printf(text, *, tag="", ts=True):
 	if ts:
 		time = now()
+		if gcinfo:
+			gcinfo.logAction(tag, f"{time} {text}")
 	else:
 		time = ""
+		if gcinfo:
+			gcinfo.logAction(tag, f"{text}")
+		
 	if tag == "say":
 		print(f"{time} [ {Color.F_Blue}SAY{Base.END} ] {text}")
 	elif tag == "say-notts":
@@ -117,7 +127,7 @@ def printf(text, *, tag="", ts=True):
 		print(f"{time} [ {Color.F_LightGray}INFO{Base.END} ] {text}")
 	elif tag == "debug":
 		if gcinfo.config._get('debug', False):
-			print(f"{time} [ {Color.F_Yellow}INFO{Base.END} ] {text}")
+			print(f"{time} [ {Color.F_Yellow}DEBUG{Base.END} ] {Color.B_Red}{text}{Base.END}")
 	else:
 		print(f"{time} | {text}")
 
@@ -134,7 +144,6 @@ def now():
 	return f"{h}:{m}:{s} "	
 
 def say(text):
-	gcinfo.logAction('say', text)
 	if not gcinfo.config._get('tts'):
 		printf(text, tag="say-notts")
 		return
@@ -241,7 +250,7 @@ def handleReturnData(return_data):
 		quit()
 	
 def run_cli():
-	printf("Loading Athena", tag="info")
+	printf("CLI READY", tag="debug")
 
 	user = gcinfo.config._get('username')
 	if user == "":
@@ -273,13 +282,13 @@ def initCacheProcesses(gcinfo):
 		filename = os.fsdecode(file)
 		if filename.endswith(".py"):
 			modname = filename.split(".")[0]
-			printf(f"Loading process module: {modname}", tag='info')
+			printf(f"Loading process module: {modname}", tag='debug')
 			importlib.import_module("processes."+modname)
 			clsmembers = inspect.getmembers(sys.modules["processes."+modname], inspect.isclass)
 			for item in clsmembers:
 				try:
 					if issubclass(item[1], AOSProcess) and item[0] != "AOSProcess":
-						printf(f"Validated {item}", tag='info')
+						printf(f"Validated {item}", tag='debug')
 						item[1](gcinfo)
 				except Exception as e:
 					pass
@@ -303,17 +312,17 @@ def initCacheCommands(gcinfo):
 		if filename.endswith(".py"):
 			modname = filename.split(".")[0]
 			if f"ext.{modname}" not in off_modules:
-				printf(f"Loading command module: {modname}", tag='info')
+				printf(f"Loading command module: {modname}", tag='debug')
 				importlib.import_module("ext."+modname)
 				clsmembers = inspect.getmembers(sys.modules["ext."+modname], inspect.isclass)
 				commandsf += clsmembers
 			else:
-				print(f"Not loading {modname}")
+				printf(f"Not loading {modname}", tag='debug')
 	
 	invalid_classes = []
 	for item in commandsf:
 		if issubclass(item[1], BaseCommand):
-			printf(f"Validated {item}", tag='info')
+			printf(f"Validated {item}", tag='debug')
 			gcinfo.command_cache[item[0]] = item[1](gcinfo)
 			gcinfo.command_cache[item[0]].onStart()
 		else:
@@ -339,6 +348,14 @@ def run():
 		run_cli()
 	except KeyboardInterrupt:
 		print("Closing.")
+		#print(gcinfo.threads)
+		for item in gcinfo.threads:
+			#print(f"Stopping thread {item}")
+			try:
+				gcinfo.threads[item]['object'].process.terminate()
+			except:
+				pass
+			
 	except Exception as e:
 		print(e)
 		run_cli()
