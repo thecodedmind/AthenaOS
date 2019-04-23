@@ -3,3 +3,7 @@ __pycache__/
 cache/
 config.json
 logs.json
+journal.json
+config.json.bk
+logs.json.bk
+journal.json.bk
