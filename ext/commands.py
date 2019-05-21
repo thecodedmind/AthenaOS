@@ -79,7 +79,7 @@ class BaseCommand:
 		"""Helper function to set the command in to hold mode, waiting for a response"""
 		return {'message': message, 'code': 'hold', 'held': self}
 	
-	def onHold(self, value):
+	def onHeld(self, value):
 		"""Like onTrigger but ran after being held"""
 		pass
 	
@@ -271,15 +271,15 @@ class Help(BaseCommand):
 			
 		return self.hold("That command wasn't found, try again?")
 	
-class Task(BaseCommand):
+class Processes(BaseCommand):
 	"""
-	Task manager
+	Process manager
 	[BASE]
 	~Kaiser
 	"""
 	def __init__(self, host):
 		super().__init__(host)
-		self.phrases = [{'message': 'task'}, {'message': 'process'}]
+		self.phrases = [{'message': 'process'}]
 		self.inter = True
 		
 	def onTrigger(self, value = ""):
@@ -306,7 +306,7 @@ class Task(BaseCommand):
 		elif value == "list":
 			s = ""
 			for item in self.host.threads:
-				print(item)
+				#print(item)
 				if self.host.config.data['processes'].get(item):
 					s += f" [\x1b[32mON\x1b[0m] {self.host.threads[item]['object'].__class__.__module__}.{item}\n"
 				else:
@@ -334,10 +334,24 @@ class CfgGet(BaseCommand):
 			c = ""
 			for item in self.host.config.data.keys():
 				if type(self.host.config._get(item)) == dict:
-					c += f"{item} = {json.dumps(self.host.config._get(item), indent=4)}\n"
+					c += f"{self.host.colours.F_Cyan}{item}{self.host.reset_f} = "
+					c += "{...}\n"
+				elif type(self.host.config._get(item)) == list:
+					c += f"{self.host.colours.F_Cyan}{item}{self.host.reset_f} = [...]\n"
+				elif type(self.host.config._get(item)) == str:
+					c += f'{self.host.colours.F_Cyan}{item}{self.host.reset_f} = "{self.host.colours.F_Yellow}{self.host.config._get(item)}{self.host.reset_f}"\n'
+				elif type(self.host.config._get(item)) == int:
+					c += f'{self.host.colours.F_Cyan}{item}{self.host.reset_f} = {self.host.colours.F_Blue}{self.host.config._get(item)}{self.host.reset_f}\n'
+				elif type(self.host.config._get(item)) == bool:
+					if self.host.config._get(item):
+						c += f'{self.host.colours.F_Cyan}{item}{self.host.reset_f} = {self.host.colours.F_Green}{self.host.config._get(item)}{self.host.reset_f}\n'
+					else:
+						c += f'{self.host.colours.F_Cyan}{item}{self.host.reset_f} = {self.host.colours.F_Red}{self.host.config._get(item)}{self.host.reset_f}\n'
 				else:
-					c += f"{item} = {self.host.config._get(item)} ({type(self.host.config._get(item))})\n"
+					c += f"{self.host.colours.F_Cyan}{item}{self.host.reset_f} = {self.host.config._get(item)} ({type(self.host.config._get(item))})\n"
 			
+			for item in self.host.config.defaults:
+				c += f"{self.host.colours.F_Magenta}DEFAULT: {item['key']} = {item['value']}{self.host.reset_f}\n"
 			return {'output': c[:-1]}
 		
 		while " " in value:
@@ -647,7 +661,7 @@ class CfgUnSet(BaseCommand):
 		self.inter = True
 		
 	def onTrigger(self, value = ""):
-		locked_vars = ['tts', 'username', 'tasks', 'events', 'disabled', 'skip_prompts']
+		locked_vars = ['tts', 'username', 'processes', 'events', 'disabled', 'skip_prompts']
 		if value in locked_vars:
 			return self.message(f"Can't delete {value}, that is a core variable.")
 		try:
@@ -686,7 +700,7 @@ class CfgSet(BaseCommand):
 		while " " in key:
 			key = key.replace(" ", "_")
 			
-		locked_vars = ['tasks', 'events', 'disabled']
+		locked_vars = ['processes', 'events', 'disabled']
 		if key in locked_vars:
 			return self.message(f"Can't edit {key}, that variable can only be modified through the relevant command.")
 		

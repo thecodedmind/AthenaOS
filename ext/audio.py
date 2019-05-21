@@ -5,6 +5,7 @@ from humanfriendly import format_timespan
 import os
 import psutil
 import shlex
+import random
 
 class AudioFindTracks(commands.BaseCommand):
 	def __init__(self, host):
@@ -44,6 +45,7 @@ class AudioNowPlaying(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
 		self.addListener("whats playing", 90)
+		self.addListener("now playing", 90)
 		
 	def onTrigger(self, value = ""):
 		return self.message(f"{self.cfg._get('currently_playing', 'Nothing.')}")
@@ -51,7 +53,8 @@ class AudioNowPlaying(commands.BaseCommand):
 class AudioStorageCurrently(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
-		self.addListener("store this track", 95)		
+		self.addListener("store this track", 95)
+		self.addListener("save this track", 95)
 		self.trackToStore = ""
 		
 	def onTrigger(self, value = ""):
@@ -59,7 +62,8 @@ class AudioStorageCurrently(commands.BaseCommand):
 			return self.message(f"Nothing is playing right now.")
 		else:
 			self.trackToStore = self.cfg._get('currently_playing', '')
-			return self.hold(f"Storing {self.cfg._get('currently_playing', '')}. What tags should it have?")
+			self.host.printf(f"Storing {self.cfg._get('currently_playing', '')}.")
+			return self.hold("What tags should it have?")
 			
 	def onHeld(self, value = ""):
 		compiled = [self.trackToStore, shlex.split(value)]
@@ -120,21 +124,28 @@ class AudioRemoveStore(commands.BaseCommand):
 						del tracks[tracks.index(item)]
 						self.cfg._set('tracks', tracks)
 						return self.message("Track deleted.")
+	
+class AudioPlayerShuffle(commands.BaseCommand):
+	def __init__(self, host):
+		super().__init__(host)
+		self.addListener("shuffle tracks")
+	
+	#Add an "excluded" tags list, to remove certain items from the list
+	#Clone the list, iterage over, if any track tags in ignore tags, remove from the cloned list
+	#Then random.choice the cloned track
+	def onTrigger(self, value = ""):
+		tracks = self.cfg._get('tracks', [])
+		ntrack = random.choice(tracks)
+		self.host.getCommand('AudioPlayer').onTrigger(ntrack[0])
 		
 class AudioPlayer(commands.BaseCommand):
 	def __init__(self, host):
 		super().__init__(host)
 		self.addListener("play")
 		self.inter = True
-		try:
-			import youtube_dl
-			youtube_support = True
-		except:
-			print("Youtube-dl module error. Disabling youtube support.")
-			youtube_support = False
 	
-	#def onRun(self):
-		#self.cfg._set('currently_playing', "Nothing.")
+	def onRun(self):
+		self.cfg._set('currently_playing', "Nothing.")
 		
 	def onTrigger(self, value = ""):
 		b = self.host.formatting.Bold
@@ -181,7 +192,7 @@ class AudioPlayer(commands.BaseCommand):
 		else:
 			g = ""
 			
-		
+		#print(track)
 		if track.startswith("http"):
 			self.stopAudio()
 			if "youtube.com" in track:
@@ -192,10 +203,18 @@ class AudioPlayer(commands.BaseCommand):
 			
 			os.system(f'ffplay "{track}"{g} -autoexit -loglevel quiet&')
 			self.cfg._set('currently_playing', track)
-			return self.message(f"Playback of {track} started.")
+			return self.message(f"Playback of audio track started.")
 		else:
-			return self.message(f"PLACEHOLDER: Will search for track {track}.")
-	
+			#youtube-dl -q -o - ytsearch:"7th dragon 2020 fused city" | ffplay -
+			f = self.host.terminal(f'youtube-dl ytsearch:"{track}" --dump-json')
+			sid = json.loads(f)['id']
+			name = json.loads(f)['title']
+			self.cfg._set('currently_playing', f"http://youtube.com/watch?v={sid}")
+			self.stopAudio()
+			os.system(f'youtube-dl -q -o - http://youtube.com/watch?v={sid} | ffplay -{g} -autoexit -loglevel quiet&')
+			self.host.printf(f"Stream Name: {name}\nURL: http://youtube.com/watch?v={sid}")
+			return self.message(f"Started streaming {name}.")
+		
 	def stopAudio(self):
 		for p in psutil.process_iter():
 			if p.name() == "ffplay":

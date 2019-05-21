@@ -1,18 +1,22 @@
 import multiprocessing
 from time import sleep
+import memory
 
 class AOSProcess:
 	def __init__(self, host):
 		self.name = type(self).__name__
 		self.process = None
 		self.host = host
+		##self.config = memory.Memory(path=self.host.scriptdir, logging=True)
+		
 		self.host.threads[self.name] = {'object': self}
 		
 		if not self.host.config.data['processes'].get(self.name):
 			pl = self.host.config.data['processes']
 			pl[self.name] = False
 			self.host.config._set('processes', pl)
-			
+		
+		self.onStart()
 		if self.host.config._get('processes')[self.name]:
 			print(f"Starting {self.name}")
 			self.start()
@@ -21,7 +25,7 @@ class AOSProcess:
 		if self.host.threads[self.name].get('process'):
 			return False
 		
-		self.host.printf(f"Running process thread : {self.name}", tag='info')
+		self.host.printf(f"Running process thread : {self.name}", tag='debug')
 		self.process = multiprocessing.Process(target=self.onTrigger, args=())
 		self.host.threads[self.name]['process'] = self.process
 		self.host.config.data['processes'][self.name] = True
@@ -33,7 +37,7 @@ class AOSProcess:
 		return True
 	
 	def stop(self):
-		self.host.printf(f"Stopping process thread : {self.name}", tag='info')
+		self.host.printf(f"Stopping process thread : {self.name}", tag='debug')
 		try:
 			self.process.terminate()
 			del self.host.threads[self.name]['process']

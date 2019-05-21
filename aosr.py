@@ -16,6 +16,9 @@ from processes.processes import AOSProcess
 import humanfriendly
 from humanfriendly import AutomaticSpinner
 import readline
+import shlex
+
+version = "19.04.24"
 gcinfo = None
 class CommandInfo:
 	def __init__(self):
@@ -38,11 +41,24 @@ class CommandInfo:
 		self.reset_f = Formatting.Reset
 		self.core_modules = ['ext.commands', 'ext.kext']
 		self.logs = None
+		self.ready = False
 	
+	def isReady(self):
+		return self.ready
+	
+	def cfgset(self, key, value):
+		self.config._set(key, value)
+
+	def cfgget(self, key):
+		return self.config._get(key)
+		
 	def getCommand(self, command_name):
 		return self.command_cache[command_name]
 	
 	def logAction(self, group:str, message:str):
+		if not self.config._get('logging', False):
+			return
+		
 		if group == "":
 			group = "untagged"
 		ts = arrow.now().format('YYYY-MM-DD HH:mm:ss')
@@ -59,7 +75,7 @@ class CommandInfo:
 		self.logs._set(str(group), g)
 		
 	def terminal(self, command):
-		res = subprocess.run(command.split(" "), stdout=subprocess.PIPE)
+		res = subprocess.run(shlex.split(command), stdout=subprocess.PIPE)
 		return str(res.stdout,"latin-1")	
 	
 	def humanizeList(self, ls):
@@ -90,6 +106,12 @@ class CommandInfo:
 				return {'output': t}
 		except KeyError:
 			return {'message': "Invalid event data."}
+	
+	def getProcess(self, name):
+		if not self.config.data['processes'][name]:
+			return None
+		
+		return self.threads[name]['object']
 		
 	def startProcess(self, task):
 		if self.config.data['processes'][task]:
@@ -104,7 +126,15 @@ class CommandInfo:
 		
 		self.threads[task]['object'].stop()
 		return True
-			
+	
+	def restartProcess(self, task):
+		if not self.config.data['processes'][task]:
+			return False
+		
+		self.threads[task]['object'].stop()
+		self.threads[task]['object'].start()
+		return True
+	
 def printf(text, *, tag="", ts=True):
 	if ts:
 		time = now()
@@ -251,7 +281,7 @@ def handleReturnData(return_data):
 	
 def run_cli():
 	printf("CLI READY", tag="debug")
-
+	gcinfo.ready = True
 	user = gcinfo.config._get('username')
 	if user == "":
 		gcinfo.config._set('username', os.environ.get('USER'))
@@ -269,7 +299,7 @@ def initCreateCore():
 	printf("Creating core...", tag='info')
 	gcinfo = CommandInfo()
 	gcinfo.config = memory.Memory(path=gcinfo.scriptdir, logging=True)
-	gcinfo.logs = memory.Memory(path=gcinfo.scriptdir+"logs.json", logging=True)
+	gcinfo.logs = memory.Memory(path=gcinfo.scriptdir+"logs.json")
 	return gcinfo
 
 def initCacheProcesses(gcinfo):
@@ -340,6 +370,7 @@ def initCacheCommands(gcinfo):
 	
 def run():
 	global gcinfo
+	print(f"Initializing AthenaOS v{version}...")
 	with AutomaticSpinner(label="Loading Athena..."):
 		gcinfo = initCreateCore()
 		initCacheProcesses(gcinfo)
